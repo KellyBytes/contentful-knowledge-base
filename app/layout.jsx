@@ -11,7 +11,7 @@ const Layout = ({ children }) => {
   return (
     <html lang="en" className="h-full scroll-smooth antialiased">
       <body className="h-full flex flex-col  text-stone-600">
-        <header className="p-8 bg-stone-100">
+        <header className="p-6 bg-stone-100">
           <Navbar />
         </header>
 

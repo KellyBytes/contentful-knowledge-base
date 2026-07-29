@@ -1,3 +1,4 @@
+import { draftMode } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getPosts } from '@/lib/contentful/posts';
 import { getPost } from '@/lib/contentful/posts';
@@ -13,11 +14,10 @@ export const generateStaticParams = async () => {
   }));
 };
 
-const Post = async ({ params, searchParams }) => {
+const Post = async ({ params }) => {
   const { slug } = await params;
-  const query = await searchParams;
 
-  const preview = query.preview === 'true';
+  const { isEnabled: preview } = await draftMode();
 
   const post = await getPost({
     slug,
@@ -28,7 +28,7 @@ const Post = async ({ params, searchParams }) => {
 
   return (
     <section className="py-24">
-      {/* {preview && <PreviewAlert />} */}
+      {preview && <PreviewAlert slug={slug} />}
 
       <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <article className="prose mx-auto">
