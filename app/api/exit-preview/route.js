@@ -6,9 +6,12 @@ export async function GET(request) {
   draft.disable();
 
   const { searchParams } = new URL(request.url);
-  const redirectTo = searchParams.get('slug')
-    ? `/posts/${searchParams.get('slug')}`
-    : `/`;
+  const requested = searchParams.get('redirect');
 
-  return NextResponse.redirect(new URL(redirectTo, request.url));
+  const isSafe =
+    typeof requested === 'string' &&
+    requested.startsWith('/') &&
+    !requested.startsWith('//');
+
+  return NextResponse.redirect(new URL(isSafe ? requested : '/', request.url));
 }

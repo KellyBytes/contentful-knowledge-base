@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Transition } from '@headlessui/react';
 
-const PreviewAlert = ({ slug }) => {
+const PreviewAlert = ({ path }) => {
   const [show, setShow] = useState(true);
 
   return (
@@ -30,7 +30,7 @@ const PreviewAlert = ({ slug }) => {
             </button>
           </div>
           <a
-            href={`/api/exit-preview?slug=${slug}`}
+            href={`/api/exit-preview?redirect=${encodeURIComponent(path)}`}
             className="mt-2 underline text-yellow-700 hover:text-yellow-900 text-sm inline-block"
           >
             Click here

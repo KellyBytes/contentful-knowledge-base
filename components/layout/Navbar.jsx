@@ -23,6 +23,14 @@ const Navbar = () => {
             Posts
           </Link>
         </li>
+        <li>
+          <Link
+            href="/kb"
+            className="text-sm font-medium uppercase text-stone-400"
+          >
+            Knowledge Base
+          </Link>
+        </li>
       </ul>
     </nav>
   );

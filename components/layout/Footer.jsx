@@ -1,8 +1,18 @@
 const Footer = () => {
   return (
-    <footer className="p-8 bg-stone-100 text-sm font-medium uppercase text-stone-400">
+    <footer className="text-right p-8 bg-stone-100 text-sm font-medium  text-stone-400">
       <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p>Footer</p>
+        <p>
+          © {new Date().getFullYear()}{' '}
+          <a
+            href="https://kellybytes.dev"
+            target="_blank"
+            className="underline hover:text-stone-600"
+          >
+            Kelly
+          </a>
+          &apos;s Notebook. All rights reserved.
+        </p>
       </div>
     </footer>
   );

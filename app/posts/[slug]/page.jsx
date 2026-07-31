@@ -28,7 +28,7 @@ const Post = async ({ params }) => {
 
   return (
     <section className="py-24">
-      {preview && <PreviewAlert slug={slug} />}
+      {preview && <PreviewAlert path={`/post/${slug}`} />}
 
       <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <article className="prose mx-auto">

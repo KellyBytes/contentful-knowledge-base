@@ -16,6 +16,7 @@ const PostCard = ({ post }) => {
             fill
             sizes="(max-width: 768px) 100vw, 33vw"
             className="object-cover"
+            loading="eager"
           />
         </div>
         <div className="p-4">
