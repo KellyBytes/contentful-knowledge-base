@@ -20,11 +20,11 @@ const KnowledgeBase = async () => {
   }, {});
 
   return (
-    <section className="py-24">
-      <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <header className="max-w-2xl mb-14">
+    <section className="py-12 md:py-24">
+      <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <header className="mb-14">
           <h1 className="text-4xl font-bold tracking-tight">Knowledge Base</h1>
-          <p className="mt-4 text-lg leading-relaxed text-slate-600">
+          <p className="max-w-2xl mt-4 text-lg leading-relaxed text-slate-600">
             Reference notes on the concepts that come up again and again in
             frontend and full-stack development.
           </p>

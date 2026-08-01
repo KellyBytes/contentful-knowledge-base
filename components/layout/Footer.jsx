@@ -1,7 +1,7 @@
 const Footer = () => {
   return (
     <footer className="text-right p-8 bg-stone-100 text-sm font-medium  text-stone-400">
-      <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <p>
           © {new Date().getFullYear()}{' '}
           <a
@@ -11,7 +11,7 @@ const Footer = () => {
           >
             Kelly
           </a>
-          &apos;s Notebook. All rights reserved.
+          &apos;s Notes. All rights reserved.
         </p>
       </div>
     </footer>

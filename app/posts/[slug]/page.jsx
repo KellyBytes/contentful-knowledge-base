@@ -27,11 +27,11 @@ const Post = async ({ params }) => {
   if (!post) return notFound();
 
   return (
-    <section className="py-24">
-      {preview && <PreviewAlert path={`/post/${slug}`} />}
+    <section className="py-12 md:py-24">
+      {preview && <PreviewAlert path={`/posts/${slug}`} />}
 
-      <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <article className="prose mx-auto">
+      <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <article className="prose prose-slate mx-auto max-w-4xl lg:prose-lg">
           <PostHeader post={post} />
           <PostBody post={post} />
         </article>

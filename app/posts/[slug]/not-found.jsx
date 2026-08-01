@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <section className="py-24 text-center">
+    <section className="py-12 md:py-24 text-center">
       <h1 className="mb-4 text-3xl font-bold">Article Not Found</h1>
 
       <p className="mb-8">

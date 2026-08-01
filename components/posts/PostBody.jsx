@@ -4,7 +4,7 @@ const PostBody = ({ post }) => {
   const { content } = post.fields;
 
   return (
-    <div className="mx-auto prose">
+    <div className="prose max-w-4xl mx-auto">
       <RichText content={content} />
     </div>
   );

@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { getArticles, getArticle } from '@/lib/contentful/kb';
 import ArticleHeader from '@/components/kb/ArticleHeader';
 import ArticleBody from '@/components/kb/ArticleBody';
+import ArticleFaq from '@/components/kb/ArticleFaq';
+import BackToTop from '@/components/ui/BackToTop';
 import PreviewAlert from '@/components/ui/PreviewAlert';
 
 export const generateStaticParams = async () => {
@@ -44,15 +46,17 @@ const ArticlePage = async ({ params }) => {
   }
 
   return (
-    <section className="py-24">
-      <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-12 md:py-24">
+      <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {preview && <PreviewAlert path={`/kb/${categorySlug}/${slug}`} />}
 
         <article className="prose prose-slate mx-auto max-w-none lg:prose-lg">
           <ArticleHeader article={article} />
           <ArticleBody article={article} />
+          <ArticleFaq questions={article.fields.interviewQuestions} />
         </article>
       </div>
+      <BackToTop />
     </section>
   );
 };

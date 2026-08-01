@@ -27,7 +27,7 @@ const Layout = ({ children }) => {
           <Navbar />
         </header>
 
-        <main className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grow p-8">
+        <main className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 grow p-8">
           {children}
         </main>
 

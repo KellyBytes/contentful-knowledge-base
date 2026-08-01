@@ -1,20 +1,5 @@
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
+import Markdown from '../Markdown';
 
-const ArticleBody = ({ article }) => {
-  const { body } = article.fields;
-
-  if (!body) return null;
-
-  return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      rehypePlugins={[rehypeHighlight]}
-    >
-      {body}
-    </ReactMarkdown>
-  );
-};
+const ArticleBody = ({ article }) => <Markdown>{article.fields.body}</Markdown>;
 
 export default ArticleBody;
