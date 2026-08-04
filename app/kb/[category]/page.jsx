@@ -6,7 +6,6 @@ import {
   getArticlesByCategory,
 } from '@/lib/contentful/kb';
 import CategoryIcon from '@/lib/icons';
-import ArticleCard from '@/components/kb/ArticleCard';
 import ArticleList from '@/components/kb/ArticleList';
 
 export const generateStaticParams = async () => {
