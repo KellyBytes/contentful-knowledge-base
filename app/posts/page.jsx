@@ -1,6 +1,12 @@
 import { getPosts } from '@/lib/contentful/posts';
 import PostCard from '@/components/posts/PostCard';
 
+export const metadata = {
+  title: "Posts | Kelly's Notes",
+  description:
+    "Stories behind my projects, technical challenges I've solved, and lessons from building for the web.",
+};
+
 const Posts = async () => {
   const posts = await getPosts();
 

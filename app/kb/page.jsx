@@ -2,7 +2,7 @@ import { getCategories, getArticles } from '@/lib/contentful/kb';
 import CategoryCard from '@/components/kb/CategoryCard';
 
 export const metadata = {
-  title: 'Knowledge Base',
+  title: "Knowledge Base | Kelly's Notes",
   description:
     'Core concepts in JavaScript, TypeScript, React, and the web platform written up as reference notes.',
 };

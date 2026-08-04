@@ -11,8 +11,9 @@ const fraunces = Fraunces({
 });
 
 export const metadata = {
-  title: 'Blog Using Contentful',
-  description: 'Blog Using Contentful and Next.js',
+  title: "Kelly's Notes",
+  description:
+    'A collection of posts, projects, and reference notes on web development, technology, and everyday learning.',
 };
 
 const Layout = ({ children }) => {

@@ -14,6 +14,20 @@ export const generateStaticParams = async () => {
   }));
 };
 
+export const generateMetadata = async ({ params }) => {
+  const { slug } = await params;
+  const post = await getPost({ slug });
+
+  if (!post) return {};
+
+  const { title, excerpt } = post.fields;
+
+  return {
+    title: `${title} | Kelly's Notes`,
+    description: excerpt,
+  };
+};
+
 const Post = async ({ params }) => {
   const { slug } = await params;
 

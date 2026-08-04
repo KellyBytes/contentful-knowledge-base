@@ -23,7 +23,7 @@ export const generateMetadata = async ({ params }) => {
   if (!category) return {};
 
   return {
-    title: `${category.fields.name} — Knowledge Base`,
+    title: `${category.fields.name} | Kelly's Notes`,
     description: category.fields.description,
   };
 };

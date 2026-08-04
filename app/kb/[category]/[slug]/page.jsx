@@ -27,7 +27,7 @@ export const generateMetadata = async ({ params }) => {
   const { title, summary } = article.fields;
 
   return {
-    title: title,
+    title: `${title} | Kelly's Notes`,
     description: summary,
   };
 };

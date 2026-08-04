@@ -36,6 +36,7 @@ const PostHeader = ({ post }) => {
           fill
           sizes="max-width: 768px) 100vw, 1200px"
           className="object-cover"
+          loading="eager"
         />
       </div>
     </header>

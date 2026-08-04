@@ -4,7 +4,6 @@ import LatestArticlesCarousel from '@/components/kb/LatestArticlesCarousel';
 
 const HomePage = async () => {
   const articles = await getLatestArticles();
-  console.log({ articles });
 
   return (
     <section className="py-12 md:py-24 space-y-6">
@@ -14,8 +13,8 @@ const HomePage = async () => {
         </h1>
 
         <p className="max-w-2xl mt-4 text-lg text-muted-foreground">
-          Thoughts, projects, and reference notes on frontend and full-stack web
-          development.
+          Thoughts, projects, and notes on web development, tech, and the things
+          I learn along the way.
         </p>
 
         <div className="mt-8 flex flex-wrap gap-4">

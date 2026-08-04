@@ -27,7 +27,6 @@ export async function GET(request) {
   });
 
   const entry = response?.items?.[0];
-  console.log({ entry });
 
   if (!entry) {
     return new NextResponse('Invalid slug', { status: 404 });
