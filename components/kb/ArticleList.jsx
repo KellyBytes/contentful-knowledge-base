@@ -47,14 +47,14 @@ const ArticleList = ({ articles, categorySlug }) => {
               aria-pressed={isActive}
               className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
                 isActive
-                  ? 'border-amber-500 bg-amber-500 text-white'
-                  : 'border-slate-200 text-slate-600 hover:border-amber-400 hover:text-amber-600'
+                  ? 'border-amber-400 bg-amber-100 text-amber-600'
+                  : 'border-stone-200 text-stone-600 hover:border-amber-400 hover:bg-amber-50 hover:text-amber-600'
               }`}
             >
               {item}
               <span
                 className={`ml-2 text-xs ${
-                  isActive ? 'text-amber-100' : 'text-slate-400'
+                  isActive ? 'text-stone-400 font-semibold' : 'text-stone-400'
                 }`}
               >
                 {counts[item]}
@@ -66,8 +66,8 @@ const ArticleList = ({ articles, categorySlug }) => {
 
       <div aria-live="polite">
         {visibleArticles.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-slate-200 p-8 text-center text-slate-500">
-            No <span className="font-medium text-slate-700">{level}</span>{' '}
+          <p className="rounded-lg border border-dashed border-stone-200 p-8 text-center text-stone-500">
+            No <span className="font-medium text-stone-700">{level}</span>{' '}
             articles yet. Coming soon.
           </p>
         ) : (
