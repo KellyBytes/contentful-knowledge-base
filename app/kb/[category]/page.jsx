@@ -7,8 +7,9 @@ import {
 } from '@/lib/contentful/kb';
 import CategoryIcon from '@/lib/icons';
 import ArticleCard from '@/components/kb/ArticleCard';
+import ArticleList from '@/components/kb/ArticleList';
 
-export const generateStaticPrams = async () => {
+export const generateStaticParams = async () => {
   const categories = await getCategories();
 
   return categories.map(category => ({
@@ -62,15 +63,7 @@ const CategoryPage = async ({ params }) => {
         {articles.length === 0 ? (
           <p className="text-slate-500">No articles here yet. Coming soon.</p>
         ) : (
-          <ul className="space-y-4">
-            {articles.map(article => (
-              <ArticleCard
-                key={article.fields.slug}
-                article={article}
-                categorySlug={categorySlug}
-              />
-            ))}
-          </ul>
+          <ArticleList articles={articles} categorySlug={categorySlug} />
         )}
       </div>
     </section>
