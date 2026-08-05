@@ -1,4 +1,3 @@
-import ReactMarkdown from 'react-markdown';
 import Markdown from '../Markdown';
 
 const ArticleFaq = ({ questions }) => {
