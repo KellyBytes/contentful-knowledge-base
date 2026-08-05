@@ -1,7 +1,6 @@
 import { draftMode } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { getPosts } from '@/lib/contentful/posts';
-import { getPost } from '@/lib/contentful/posts';
+import { getPosts, getPost } from '@/lib/contentful/posts';
 import PostHeader from '@/components/posts/PostHeader';
 import PostBody from '@/components/posts/PostBody';
 import PreviewAlert from '@/components/ui/PreviewAlert';
@@ -16,7 +15,8 @@ export const generateStaticParams = async () => {
 
 export const generateMetadata = async ({ params }) => {
   const { slug } = await params;
-  const post = await getPost({ slug });
+  const { isEnabled: preview } = await draftMode();
+  const post = await getPost({ slug, preview });
 
   if (!post) return {};
 
@@ -30,13 +30,9 @@ export const generateMetadata = async ({ params }) => {
 
 const Post = async ({ params }) => {
   const { slug } = await params;
-
   const { isEnabled: preview } = await draftMode();
 
-  const post = await getPost({
-    slug,
-    preview,
-  });
+  const post = await getPost({ slug, preview });
 
   if (!post) return notFound();
 

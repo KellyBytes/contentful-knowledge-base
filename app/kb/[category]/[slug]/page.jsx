@@ -20,7 +20,8 @@ export const generateStaticParams = async () => {
 
 export const generateMetadata = async ({ params }) => {
   const { slug } = await params;
-  const article = await getArticle({ slug });
+  const { isEnabled: preview } = await draftMode();
+  const article = await getArticle({ slug, preview });
 
   if (!article) return {};
 
