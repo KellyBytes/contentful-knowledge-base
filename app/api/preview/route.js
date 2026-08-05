@@ -1,7 +1,8 @@
-import { draftMode } from 'next/headers';
-import { NextResponse } from 'next/server';
 import { getContentfulClient } from '@/lib/contentful/client';
 import { previewRoutes } from '@/lib/preview-routes';
+import { resolveInternalPath } from '@/lib/utils/safe-redirect';
+import { draftMode } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -9,9 +10,12 @@ export async function GET(request) {
   const slug = searchParams.get('slug');
   const type = searchParams.get('type') ?? 'post';
 
-  if (secret !== process.env.CONTENTFUL_PREVIEW_SECRET || !slug) {
+  const expected = process.env.CONTENTFUL_PREVIEW_SECRET;
+  if (!expected)
+    return new NextResponse('Preview not configured', { status: 503 });
+
+  if (secret !== expected || !slug)
     return new NextResponse('Invalid token', { status: 401 });
-  }
 
   const config = previewRoutes[type];
 
@@ -41,8 +45,13 @@ export async function GET(request) {
     );
   }
 
+  const safePath = resolveInternalPath(path, request.url);
+
+  if (!safePath)
+    return new NextResponse('Preview path failed validation', { status: 500 });
+
   const draft = await draftMode();
   draft.enable();
 
-  return NextResponse.redirect(new URL(path, request.url));
+  return NextResponse.redirect(new URL(safePath, request.url));
 }
