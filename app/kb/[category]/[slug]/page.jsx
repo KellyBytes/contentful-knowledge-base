@@ -1,5 +1,5 @@
 import { draftMode } from 'next/headers';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { getArticles, getArticle } from '@/lib/contentful/kb';
 import ArticleHeader from '@/components/kb/ArticleHeader';
 import ArticleBody from '@/components/kb/ArticleBody';
@@ -41,9 +41,14 @@ const ArticlePage = async ({ params }) => {
 
   if (!article) return notFound();
 
-  // Check whether the category in the url matches the category of the article
-  if (article.fields.category?.fields?.slug !== categorySlug) {
-    return notFound();
+  const actualCategory = article.fields.category?.fields?.slug;
+
+  // Article exists but has no category reference - cannot build a canonical URL
+  if (!actualCategory) return notFound();
+
+  // Canonicalize: the article's own category is the source of truth
+  if (actualCategory !== categorySlug) {
+    redirect(`/kb/${actualCategory}/${slug}`);
   }
 
   return (

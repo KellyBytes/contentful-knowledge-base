@@ -11,7 +11,7 @@ export default function NotFound() {
 
       <Link
         href="/posts"
-        className="inline-block rounded bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
+        className="inline-block rounded-lg bg-stone-600 px-5 py-2 text-white hover:bg-stone-700"
       >
         ← Back to All Posts
       </Link>
