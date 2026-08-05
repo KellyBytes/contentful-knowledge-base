@@ -12,7 +12,7 @@ const CompactArticleCard = ({ article }) => {
         h-full
         rounded-xl
         border
-        border-stone-200
+        border-slate-200
         bg-amber-50/30
         p-5
         transition

@@ -1,6 +1,6 @@
-import Link from 'next/link';
-import { getLatestArticles } from '@/lib/contentful/kb';
 import LatestArticlesCarousel from '@/components/kb/LatestArticlesCarousel';
+import { getLatestArticles } from '@/lib/contentful/kb';
+import Link from 'next/link';
 
 const HomePage = async () => {
   const articles = await getLatestArticles();
@@ -27,7 +27,7 @@ const HomePage = async () => {
 
           <Link
             href="/kb"
-            className="px-5 py-3 rounded-xl font-semibold border border-stone-200 transition hover:border-amber-400 hover:text-amber-600 hover:shadow-md"
+            className="px-5 py-3 rounded-xl font-semibold border border-slate-200 transition hover:border-amber-400 hover:text-amber-600 hover:shadow-md"
           >
             Knowledge Base
           </Link>

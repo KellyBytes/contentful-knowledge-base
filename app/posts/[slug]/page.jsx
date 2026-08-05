@@ -1,9 +1,9 @@
+import PostBody from '@/components/posts/PostBody';
+import PostHeader from '@/components/posts/PostHeader';
+import PreviewAlert from '@/components/ui/PreviewAlert';
+import { getPost, getPosts } from '@/lib/contentful/posts';
 import { draftMode } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { getPosts, getPost } from '@/lib/contentful/posts';
-import PostHeader from '@/components/posts/PostHeader';
-import PostBody from '@/components/posts/PostBody';
-import PreviewAlert from '@/components/ui/PreviewAlert';
 
 export const generateStaticParams = async () => {
   const posts = await getPosts();
@@ -41,7 +41,7 @@ const Post = async ({ params }) => {
       {preview && <PreviewAlert path={`/posts/${slug}`} />}
 
       <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <article className="prose prose-slate mx-auto max-w-4xl lg:prose-lg">
+        <article className="prose prose-stone mx-auto max-w-4xl lg:prose-lg">
           <PostHeader post={post} />
           <PostBody post={post} />
         </article>

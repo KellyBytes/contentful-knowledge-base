@@ -27,7 +27,7 @@ const PostCard = ({ post }) => {
           <h3 className="mb-1 text-lg font-semibold leading-snug group-hover:text-amber-600">
             {title}
           </h3>
-          <div className="text-sm mb-4 text-gray-400">
+          <div className="text-sm mb-4 text-slate-400">
             <DateComponent dateString={date} />
           </div>
           <p className="mb-4 text-base leading-snug">{excerpt}</p>

@@ -7,7 +7,7 @@ const Footer = () => {
           <a
             href="https://kellybytes.dev"
             target="_blank"
-            className="underline hover:text-stone-600"
+            className="underline hover:text-stone-500"
           >
             Kelly
           </a>

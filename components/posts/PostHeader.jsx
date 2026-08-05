@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import ContentfulImage from '../ui/ContentfulImage';
 import DateComponent from '../ui/DateComponent';
 
@@ -25,7 +25,7 @@ const PostHeader = ({ post }) => {
       <div className="flex justify-between items-center mb-10">
         <DateComponent
           dateString={date}
-          className="mt-2 text-sm text-gray-400"
+          className="mt-2 text-sm text-slate-400"
         />
       </div>
 

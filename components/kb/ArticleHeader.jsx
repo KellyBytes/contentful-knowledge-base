@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import DifficultyBadge from './DifficultyBadge';
 
 const ArticleHeader = ({ article }) => {
@@ -25,7 +25,7 @@ const ArticleHeader = ({ article }) => {
 
       <h1 className="mt-3 text-4xl font-semibold tracking-tight">{title}</h1>
 
-      <p className="mt-4 text-lg leading-relaxed text-slate-600">{summary}</p>
+      <p className="mt-4 text-lg leading-relaxed">{summary}</p>
 
       <div className="flex items-center gap-4 mt-6 text-sm text-slate-500">
         <DifficultyBadge level={difficulty} />

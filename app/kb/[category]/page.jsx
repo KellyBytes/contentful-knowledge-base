@@ -1,12 +1,12 @@
-import { notFound } from 'next/navigation';
-import Link from 'next/link';
+import ArticleList from '@/components/kb/ArticleList';
 import {
+  getArticlesByCategory,
   getCategories,
   getCategory,
-  getArticlesByCategory,
 } from '@/lib/contentful/kb';
 import CategoryIcon from '@/lib/icons';
-import ArticleList from '@/components/kb/ArticleList';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 export const generateStaticParams = async () => {
   const categories = await getCategories();
@@ -56,7 +56,7 @@ const CategoryPage = async ({ params }) => {
             <CategoryIcon name={icon} className="size-6" />
           </span>
           <h1 className="mt-5 text-4xl font-bold tracking-tight">{name}</h1>
-          <p className="mt-4 leading-relaxed text-slate-600">{description}</p>
+          <p className="mt-4 leading-relaxed">{description}</p>
         </header>
 
         {articles.length === 0 ? (

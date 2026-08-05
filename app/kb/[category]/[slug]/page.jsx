@@ -51,7 +51,7 @@ const ArticlePage = async ({ params }) => {
       <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {preview && <PreviewAlert path={`/kb/${categorySlug}/${slug}`} />}
 
-        <article className="prose prose-slate mx-auto max-w-none lg:prose-lg">
+        <article className="prose prose-stone mx-auto max-w-none lg:prose-lg">
           <ArticleHeader article={article} />
           <ArticleBody article={article} />
           <ArticleFaq questions={article.fields.interviewQuestions} />

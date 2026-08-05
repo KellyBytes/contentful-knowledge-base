@@ -1,5 +1,5 @@
-import { getCategories, getArticles } from '@/lib/contentful/kb';
 import CategoryCard from '@/components/kb/CategoryCard';
+import { getArticles, getCategories } from '@/lib/contentful/kb';
 
 export const metadata = {
   title: "Knowledge Base | Kelly's Notes",
@@ -24,7 +24,7 @@ const KnowledgeBase = async () => {
       <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <header className="mb-14">
           <h1 className="text-4xl font-bold tracking-tight">Knowledge Base</h1>
-          <p className="max-w-2xl mt-4 text-lg leading-relaxed text-slate-600">
+          <p className="max-w-2xl mt-4 text-lg leading-relaxed">
             Reference notes on the concepts that come up again and again in
             frontend and full-stack development.
           </p>

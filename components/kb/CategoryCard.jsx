@@ -18,12 +18,18 @@ const CategoryCard = ({ category, articleCount }) => {
           {name}
         </h2>
 
-        <p className="flex-1 mt-2 text-sm leading-relaxed text-slate-600">
+        <p className="flex-1 mt-2 text-sm leading-relaxed text-stone-600">
           {description}
         </p>
 
-        <p className="mt-5 text-xs font-medium uppercase tracking-wide text-slate-400">
-          {articleCount} {articleCount === 1 ? 'article' : 'articles'}
+        <p className="mt-5 text-xs font-medium uppercase tracking-wide text-slate-500">
+          {articleCount === 0 ? (
+            <span className="text-slate-400">Coming soon</span>
+          ) : articleCount === 1 ? (
+            <span>1 article</span>
+          ) : (
+            `${articleCount} articles`
+          )}
         </p>
       </Link>
     </li>

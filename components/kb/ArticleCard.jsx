@@ -17,7 +17,7 @@ const ArticleCard = ({ article, categorySlug }) => {
           <DifficultyBadge level={difficulty} />
         </div>
 
-        <p className="mt-2 text-sm leading-relaxed text-slate-600">{summary}</p>
+        <p className="mt-2 text-sm leading-relaxed text-stone-600">{summary}</p>
       </Link>
     </li>
   );

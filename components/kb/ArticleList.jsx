@@ -48,7 +48,7 @@ const ArticleList = ({ articles, categorySlug }) => {
               className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
                 isActive
                   ? 'border-amber-400 bg-amber-100 text-amber-600'
-                  : 'border-stone-200 text-stone-600 hover:border-amber-400 hover:bg-amber-50 hover:text-amber-600'
+                  : 'border-slate-200 text-stone-600 hover:border-amber-400 hover:bg-amber-50 hover:text-amber-600'
               }`}
             >
               {item}
@@ -66,7 +66,7 @@ const ArticleList = ({ articles, categorySlug }) => {
 
       <div aria-live="polite">
         {visibleArticles.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-stone-200 p-8 text-center text-stone-500">
+          <p className="rounded-lg border border-dashed border-slate-200 p-8 text-center text-stone-500">
             No <span className="font-medium text-stone-700">{level}</span>{' '}
             articles yet. Coming soon.
           </p>

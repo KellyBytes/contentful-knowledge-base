@@ -1,5 +1,5 @@
-import { getPosts } from '@/lib/contentful/posts';
 import PostCard from '@/components/posts/PostCard';
+import { getPosts } from '@/lib/contentful/posts';
 
 export const metadata = {
   title: "Posts | Kelly's Notes",
@@ -15,7 +15,7 @@ const Posts = async () => {
       <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <header className="mb-14">
           <h1 className="text-4xl font-bold tracking-tight">Posts</h1>
-          <p className="max-w-2xl mt-4 text-lg leading-relaxed text-slate-600">
+          <p className="max-w-2xl mt-4 text-lg leading-relaxed">
             Stories behind my projects, technical challenges I&apos;ve solved,
             and lessons from building for the web.
           </p>
