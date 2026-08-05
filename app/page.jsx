@@ -20,14 +20,14 @@ const HomePage = async () => {
         <div className="mt-8 flex flex-wrap gap-4">
           <Link
             href="/posts"
-            className="px-5 py-3 rounded-xl font-semibold text-white bg-stone-600 border border-stone-600 transition hover:bg-stone-500 hover:shadow-md"
+            className="px-5 py-3 rounded-lg font-semibold text-white bg-stone-600 border border-stone-600 transition hover:bg-stone-500 hover:shadow-md"
           >
             Browse Posts
           </Link>
 
           <Link
             href="/kb"
-            className="px-5 py-3 rounded-xl font-semibold border border-slate-200 transition hover:border-amber-400 hover:text-amber-600 hover:shadow-md"
+            className="px-5 py-3 rounded-lg font-semibold border border-slate-300 transition hover:border-amber-400 hover:text-amber-600 hover:shadow-md"
           >
             Knowledge Base
           </Link>
