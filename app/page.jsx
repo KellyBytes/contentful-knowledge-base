@@ -6,7 +6,7 @@ const HomePage = async () => {
   const articles = await getLatestArticles();
 
   return (
-    <section className="py-12 md:py-24 space-y-6">
+    <section className="py-10 md:py-20 space-y-6">
       <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-5xl font-bold tracking-tight">
           Kelly&apos;s Notes

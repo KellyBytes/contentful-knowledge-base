@@ -9,7 +9,7 @@ const Error = ({ error, reset }) => {
   }, [error]);
 
   return (
-    <section className="py-12 md:py-24">
+    <section className="flex flex-col h-full items-center justify-center">
       <div className="container mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 text-center">
         <h1 className="mb-4 text-3xl font-bold">Something Went Wrong</h1>
 

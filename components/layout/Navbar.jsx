@@ -4,10 +4,10 @@ import SearchDialog from '../ui/SearchDialog';
 const Navbar = () => {
   return (
     <nav
-      className="container flex items-center justify-between max-w-4xl mx-auto px-4 sm:px-6 lg:px-8
+      className="container flex items-center justify-between max-w-4xl mx-auto py-4 px-4 sm:px-6 lg:px-8
 "
     >
-      <ul className="flex gap-4">
+      <ul className="flex gap-4 text-center">
         <li>
           <Link
             href="/"

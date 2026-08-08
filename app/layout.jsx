@@ -1,8 +1,8 @@
-import { Fraunces } from 'next/font/google';
-import 'highlight.js/styles/github-dark.css';
 import '@/assets/styles/globals.css';
-import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import Navbar from '@/components/layout/Navbar';
+import 'highlight.js/styles/github-dark.css';
+import { Fraunces } from 'next/font/google';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -24,7 +24,7 @@ const Layout = ({ children }) => {
       className={`h-full scroll-smooth antialiased ${fraunces.variable}`}
     >
       <body className="h-full flex flex-col  text-stone-600">
-        <header className="p-6 bg-stone-100">
+        <header className="bg-stone-100">
           <Navbar />
         </header>
 

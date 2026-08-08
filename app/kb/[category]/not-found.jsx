@@ -5,7 +5,7 @@ export default async function NotFound() {
   const categories = await getCategories();
 
   return (
-    <section className="py-12 md:py-24 text-center">
+    <section className="flex flex-col h-full items-center justify-center">
       <h1 className="mb-4 text-3xl font-bold">Category Not Found</h1>
 
       <p className="mb-8">

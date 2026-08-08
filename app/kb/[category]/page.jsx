@@ -41,7 +41,7 @@ const CategoryPage = async ({ params }) => {
   const { name, description, icon } = category.fields;
 
   return (
-    <section className="py-12 md:py-24">
+    <section className="py-8 md:py-16">
       <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="mb-8 text-sm text-slate-500">
           <Link href="/kb" className="hover:text-amber-600">

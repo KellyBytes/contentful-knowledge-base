@@ -11,7 +11,7 @@ const Posts = async () => {
   const posts = await getPosts();
 
   return (
-    <section className="py-12 md:py-24">
+    <section className="py-8 md:py-16">
       <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <header className="mb-14">
           <h1 className="text-4xl font-bold tracking-tight">Posts</h1>

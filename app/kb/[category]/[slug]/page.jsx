@@ -1,11 +1,11 @@
-import { draftMode } from 'next/headers';
-import { notFound, redirect } from 'next/navigation';
-import { getArticles, getArticle } from '@/lib/contentful/kb';
-import ArticleHeader from '@/components/kb/ArticleHeader';
 import ArticleBody from '@/components/kb/ArticleBody';
 import ArticleFaq from '@/components/kb/ArticleFaq';
+import ArticleHeader from '@/components/kb/ArticleHeader';
 import BackToTop from '@/components/ui/BackToTop';
 import PreviewAlert from '@/components/ui/PreviewAlert';
+import { getArticle, getArticles } from '@/lib/contentful/kb';
+import { draftMode } from 'next/headers';
+import { notFound, redirect } from 'next/navigation';
 
 export const generateStaticParams = async () => {
   const articles = await getArticles();
@@ -52,7 +52,7 @@ const ArticlePage = async ({ params }) => {
   }
 
   return (
-    <section className="py-12 md:py-24">
+    <section className="py-8 md:py-16">
       <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {preview && <PreviewAlert path={`/kb/${categorySlug}/${slug}`} />}
 
