@@ -286,4 +286,12 @@ It also serves a practical purpose: it is where I document what I learn, which m
 
 <br />
 
+## License
+
+This project is licensed under the [MIT License](./LICENSE).
+
+<br />
+
+---
+
 [🔼 Back to Top](#kellys-notes--nextjs--contentful-content-platform)
