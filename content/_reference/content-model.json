@@ -1,0 +1,428 @@
+[
+  {
+    "id": "article",
+    "name": "Article",
+    "displayField": "title",
+    "fields": [
+      {
+        "id": "title",
+        "name": "Title",
+        "type": "Symbol",
+        "required": true,
+        "validations": []
+      },
+      {
+        "id": "slug",
+        "name": "Slug",
+        "type": "Symbol",
+        "required": true,
+        "validations": [
+          {
+            "unique": true
+          },
+          {
+            "regexp": {
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "flags": null
+            }
+          }
+        ]
+      },
+      {
+        "id": "category",
+        "name": "Category",
+        "type": "Link",
+        "required": true,
+        "linkType": "Entry",
+        "validations": [
+          {
+            "linkContentType": [
+              "category"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "order",
+        "name": "Order",
+        "type": "Integer",
+        "required": false,
+        "validations": []
+      },
+      {
+        "id": "difficulty",
+        "name": "Difficulty",
+        "type": "Symbol",
+        "required": true,
+        "validations": [
+          {
+            "in": [
+              "Beginner",
+              "Intermediate",
+              "Advanced"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "summary",
+        "name": "Summary",
+        "type": "Symbol",
+        "required": true,
+        "validations": []
+      },
+      {
+        "id": "tag",
+        "name": "Tag",
+        "type": "Array",
+        "required": true,
+        "items": {
+          "type": "Link",
+          "validations": [
+            {
+              "linkContentType": [
+                "tag"
+              ]
+            }
+          ],
+          "linkType": "Entry"
+        },
+        "validations": [
+          {
+            "size": {
+              "min": null,
+              "max": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "lastReviewed",
+        "name": "Last Reviewed",
+        "type": "Date",
+        "required": true,
+        "validations": []
+      },
+      {
+        "id": "body",
+        "name": "Body",
+        "type": "Text",
+        "required": true,
+        "validations": []
+      },
+      {
+        "id": "interviewQuestions",
+        "name": "Interview Questions",
+        "type": "Array",
+        "required": false,
+        "items": {
+          "type": "Link",
+          "validations": [
+            {
+              "linkContentType": [
+                "interviewQuestion"
+              ]
+            }
+          ],
+          "linkType": "Entry"
+        },
+        "validations": [
+          {
+            "size": {
+              "min": null,
+              "max": 5
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "interviewQuestion",
+    "name": "Interview Question",
+    "displayField": "question",
+    "fields": [
+      {
+        "id": "question",
+        "name": "question",
+        "type": "Symbol",
+        "required": true,
+        "validations": []
+      },
+      {
+        "id": "shortAnswer",
+        "name": "shortAnswer",
+        "type": "Text",
+        "required": true,
+        "validations": [
+          {
+            "size": {
+              "min": null,
+              "max": 600
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "post",
+    "name": "Post",
+    "displayField": "title",
+    "fields": [
+      {
+        "id": "title",
+        "name": "Title",
+        "type": "Symbol",
+        "required": true,
+        "validations": []
+      },
+      {
+        "id": "slug",
+        "name": "Slug",
+        "type": "Symbol",
+        "required": true,
+        "validations": [
+          {
+            "unique": true
+          }
+        ]
+      },
+      {
+        "id": "excerpt",
+        "name": "Excerpt",
+        "type": "Text",
+        "required": true,
+        "validations": []
+      },
+      {
+        "id": "coverImage",
+        "name": "Cover Image",
+        "type": "Link",
+        "required": true,
+        "linkType": "Asset",
+        "validations": [
+          {
+            "linkMimetypeGroup": [
+              "image"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "content",
+        "name": "Content",
+        "type": "RichText",
+        "required": true,
+        "validations": [
+          {
+            "enabledMarks": [
+              "bold",
+              "italic",
+              "underline",
+              "code",
+              "superscript",
+              "subscript",
+              "strikethrough"
+            ],
+            "message": "Only bold, italic, underline, code, superscript, subscript, and strikethrough marks are allowed"
+          },
+          {
+            "enabledNodeTypes": [
+              "heading-2",
+              "heading-3",
+              "heading-4",
+              "heading-5",
+              "heading-6",
+              "ordered-list",
+              "unordered-list",
+              "hr",
+              "blockquote",
+              "embedded-entry-block",
+              "embedded-asset-block",
+              "table",
+              "asset-hyperlink",
+              "embedded-entry-inline",
+              "entry-hyperlink",
+              "hyperlink"
+            ],
+            "message": "Only heading 2, heading 3, heading 4, heading 5, heading 6, ordered list, Unordered list, horizontal rule, quote, block entry, asset, table, link to asset, inline entry, link to entry, and link to Url nodes are allowed"
+          },
+          {
+            "nodes": {}
+          }
+        ]
+      },
+      {
+        "id": "date",
+        "name": "Date",
+        "type": "Date",
+        "required": true,
+        "validations": []
+      }
+    ]
+  },
+  {
+    "id": "tag",
+    "name": "Tag",
+    "displayField": "name",
+    "fields": [
+      {
+        "id": "name",
+        "name": "Name",
+        "type": "Symbol",
+        "required": true,
+        "validations": [
+          {
+            "unique": true
+          }
+        ]
+      },
+      {
+        "id": "slug",
+        "name": "Slug",
+        "type": "Symbol",
+        "required": true,
+        "validations": [
+          {
+            "unique": true
+          },
+          {
+            "regexp": {
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "flags": null
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "category",
+    "name": "Category",
+    "displayField": "name",
+    "fields": [
+      {
+        "id": "name",
+        "name": "Name",
+        "type": "Symbol",
+        "required": true,
+        "validations": [
+          {
+            "unique": true
+          }
+        ]
+      },
+      {
+        "id": "slug",
+        "name": "Slug",
+        "type": "Symbol",
+        "required": true,
+        "validations": [
+          {
+            "unique": true
+          },
+          {
+            "regexp": {
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "flags": null
+            }
+          }
+        ]
+      },
+      {
+        "id": "description",
+        "name": "Description",
+        "type": "Symbol",
+        "required": true,
+        "validations": []
+      },
+      {
+        "id": "icon",
+        "name": "Icon",
+        "type": "Symbol",
+        "required": true,
+        "validations": [
+          {
+            "in": [
+              "braces",
+              "file-code-2",
+              "component",
+              "layers",
+              "palette",
+              "server",
+              "database",
+              "globe"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "order",
+        "name": "Order",
+        "type": "Integer",
+        "required": true,
+        "validations": [
+          {
+            "unique": true
+          },
+          {
+            "range": {
+              "min": 1,
+              "max": 9999
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "videoEmbed",
+    "name": "Video Embed",
+    "displayField": "title",
+    "fields": [
+      {
+        "id": "title",
+        "name": "Title",
+        "type": "Symbol",
+        "required": true,
+        "validations": []
+      },
+      {
+        "id": "embedUrl",
+        "name": "Embed Url",
+        "type": "Symbol",
+        "required": true,
+        "validations": []
+      }
+    ]
+  },
+  {
+    "id": "author",
+    "name": "Author",
+    "displayField": "name",
+    "fields": [
+      {
+        "id": "name",
+        "name": "Name",
+        "type": "Symbol",
+        "required": true,
+        "validations": []
+      },
+      {
+        "id": "picture",
+        "name": "Picture",
+        "type": "Link",
+        "required": true,
+        "linkType": "Asset",
+        "validations": [
+          {
+            "linkMimetypeGroup": [
+              "image"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
