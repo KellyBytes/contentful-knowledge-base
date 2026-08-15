@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "article:model": "node --env-file=.env --env-file=.env.local scripts/export-content-model.mjs",
+    "article:pull": "node --env-file=.env --env-file=.env.local scripts/article-pull.mjs",
+    "article:push": "node --env-file=.env --env-file=.env.local scripts/article-push.mjs"
   },
   "dependencies": {
     "@contentful/rich-text-react-renderer": "^16.2.2",
@@ -24,8 +27,10 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.20",
+    "contentful-management": "^12.14.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
+    "gray-matter": "^4.0.3",
     "tailwindcss": "^4"
   }
 }
