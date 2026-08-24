@@ -1,6 +1,8 @@
 import ArticleBody from '@/components/kb/ArticleBody';
 import ArticleFaq from '@/components/kb/ArticleFaq';
 import ArticleHeader from '@/components/kb/ArticleHeader';
+import ArticleLinkList from '@/components/kb/ArticleLinkList';
+import GotchaList from '@/components/kb/GotchaList';
 import BackToTop from '@/components/ui/BackToTop';
 import PreviewAlert from '@/components/ui/PreviewAlert';
 import { getArticle, getArticles } from '@/lib/contentful/kb';
@@ -58,8 +60,18 @@ const ArticlePage = async ({ params }) => {
 
         <article className="prose prose-stone mx-auto max-w-none lg:prose-lg">
           <ArticleHeader article={article} />
+          <ArticleLinkList
+            title="Before you start"
+            articles={article.fields.prerequisites}
+          />
           <ArticleBody article={article} />
+          <GotchaList gotchas={article.fields.gotchas} />
           <ArticleFaq questions={article.fields.interviewQuestions} />
+          <ArticleLinkList
+            title="Keep reading"
+            articles={article.fields.related}
+            className="mt-16 pt-10 border-t border-slate-200"
+          />
         </article>
       </div>
       <BackToTop />

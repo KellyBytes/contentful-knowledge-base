@@ -3,7 +3,15 @@ import Link from 'next/link';
 import DifficultyBadge from './DifficultyBadge';
 
 const ArticleHeader = ({ article }) => {
-  const { title, summary, difficulty, lastReviewed, category } = article.fields;
+  const {
+    title,
+    summary,
+    difficulty,
+    lastReviewed,
+    category,
+    readingTime,
+    versionScope,
+  } = article.fields;
 
   const categoryName = category?.fields?.name;
   const categorySlug = category?.fields?.slug;
@@ -29,6 +37,7 @@ const ArticleHeader = ({ article }) => {
 
       <div className="flex items-center gap-4 mt-6 text-sm text-slate-500">
         <DifficultyBadge level={difficulty} />
+        {readingTime && <span>{readingTime} min read</span>}
         {lastReviewed && (
           <span>
             Last reviewed{' '}
@@ -42,6 +51,12 @@ const ArticleHeader = ({ article }) => {
           </span>
         )}
       </div>
+
+      {versionScope && (
+        <p className="mt-3 text-sm italic text-slate-500">
+          Applies to: {versionScope}
+        </p>
+      )}
     </header>
   );
 };
