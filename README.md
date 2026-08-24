@@ -149,14 +149,65 @@ lib/
 
 ## Content Model
 
-| Content Type | Body Field           | Key Fields                                                      |
-| ------------ | -------------------- | --------------------------------------------------------------- |
-| **Post**     | Rich Text            | title, slug, excerpt, cover image, author, published date       |
-| **Article**  | Long Text (Markdown) | title, slug, category, difficulty, summary, interview questions |
-| **Category** | —                    | name, slug, description, order                                  |
-| **Author**   | —                    | name, avatar, bio                                               |
+| Content Type          | Body Field           | Key Fields                                                                                                         |
+| --------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------ | --- |
+| **Post**              | Rich Text            | title, slug, excerpt, cover image, author, published date                                                          |
+| **Article**           | Long Text (Markdown) | title, slug, category, tag, difficulty, summary, versionScope, prerequisites, related, gotchas, interviewQuestions |
+| **Gotcha**            | —                    | symptom, slug, errorMessage, cause, fix, category, tag                                                             |
+| **InterviewQuestion** | —                    | question, shortAnswer                                                                                              |
+| **Category**          | —                    | name, slug, description, order                                                                                     |
+| **Tag**               | —                    | name, slug                                                                                                         |
+| **Author**            | —                    | name, avatar, bio                                                                                                  |     |
 
 The body field types were chosen intentionally. Blog posts benefit from Rich Text's embedded-entry support and structured editing, while knowledge base articles are code-heavy and are authored far more efficiently in Markdown.
+Gotchas and interview questions are separate entries rather than body content, because both are reused across articles and both need to be listed independently — a pitfall is most useful when it can be found by its symptom rather than by knowing which article discusses it.
+
+<br />
+
+## How Articles Get Written
+
+Knowledge base articles are produced by a repeatable pipeline rather than written
+ad hoc. The goal is consistency as the article count grows: the same structure, the
+same front matter, and the same standard for what qualifies as a reusable "gotcha,"
+so the CMS stays queryable instead of becoming a pile of prose.
+
+```
+content/_reference/            → the contracts the pipeline writes against
+├── article-template.md          structure, front matter, length budget by difficulty
+├── topic-ownership.md           which concept belongs to which article
+├── categories.json              fixed category list
+├── tags.json                    fixed tag list; three per article
+└── content-model.json           exported Contentful schema
+
+.claude/skills/
+├── article-ideas/               proposes the next topic against topic-ownership.md
+└── new-article/                 drafts against article-template.md
+
+scripts/
+├── article-push.mjs             creates or updates the Contentful entry
+├── article-pull.mjs             pulls the resolved entry back, with entry IDs
+└── export-content-model.mjs     regenerates content-model.json
+```
+
+### Design decisions
+
+- **The template is a contract, not a prompt.** `article-template.md` is written to be
+  read by a human reviewer as much as by the drafting skill. It specifies when a
+  metaphor is appropriate, when a comparison table is not, and what makes a pitfall
+  worth extracting into its own entry. A generated draft is measured against it.
+- **Reference data lives in the repo.** Categories, tags, and the exported content
+  model are version-controlled files rather than knowledge the skill has to hold.
+  Changing the taxonomy is a diff, not a prompt edit.
+- **Round-trip, not one-way.** Push creates the entry; pull writes the resolved
+  entry back to the markdown file with its Contentful IDs. The file in the repo stays
+  the thing you can diff and review.
+- **Gotchas are shared entries, not body text.** A pitfall such as "loop callbacks
+  all print the same final number" is referenced by both the `var-let-const` and
+  `closures-explained` articles rather than duplicated into each. Reverse lookups use
+  `links_to_entry`, so no back-reference field has to be kept in sync.
+
+The skills are in progress; the reference contracts and the push/pull scripts are in
+use today.
 
 <br />
 
@@ -218,6 +269,7 @@ Cached fetchers were originally created inside factory functions, which deferred
 time. Hoisting them to module scope — the correct approach, since `unstable_cache` already includes
 arguments in its key — surfaced a temporal dead zone error that the closure had been masking. A refactor
 that reveals a latent bug is a good outcome, not a regression.
+(The mechanism is written up in [Closures Explained](https://notes.kellybytes.dev/kb/javascript/closures-explained).)
 
 ### 5. Styling Content You Did Not Author
 
@@ -264,7 +316,6 @@ Deployed to **Vercel** with:
 
 - Contentful webhooks for on-demand revalidation instead of time-based ISR
 - Migration from `unstable_cache` to the `use cache` directive
-- Tag-based cross-linking between blog posts and knowledge base articles
 - RSS feed and sitemap generation
 - Table of contents and reading progress indicator
 - Full-text search backed by a dedicated index rather than a static payload
@@ -281,6 +332,7 @@ Kelly's Notes demonstrates my ability to:
 - Identify and close a real vulnerability class, and generalize the fix rather than patching one instance
 - Separate data access, domain logic, and presentation into maintainable layers
 - Ship and maintain a live application that grows over time
+- Design an AI-assisted authoring workflow around explicit, version-controlled contracts, so generated output is reviewable and consistent rather than ad hoc
 
 It also serves a practical purpose: it is where I document what I learn, which means it is continuously used, maintained, and extended rather than finished and archived.
 
