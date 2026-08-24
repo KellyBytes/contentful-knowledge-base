@@ -1,5 +1,6 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import rehypeHighlight from 'rehype-highlight';
 
 const Markdown = ({ children }) => {
@@ -8,7 +9,7 @@ const Markdown = ({ children }) => {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
-      rehypePlugins={[rehypeHighlight]}
+      rehypePlugins={[rehypeRaw, rehypeHighlight]}
     >
       {children}
     </ReactMarkdown>
