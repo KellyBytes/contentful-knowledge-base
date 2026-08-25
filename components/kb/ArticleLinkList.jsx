@@ -13,7 +13,9 @@ const ArticleLinkList = ({ title, articles, className = '' }) => {
   if (resolved.length === 0) return null;
 
   return (
-    <section className="not-prose mb-12 pb-10 border-b border-slate-200">
+    <section
+      className={`not-prose ${className ? className : 'mb-12 pb-10 border-b border-slate-200'}`}
+    >
       <h2 className="text-2xl font-bold tracking-tight text-stone-900">
         {title}
       </h2>

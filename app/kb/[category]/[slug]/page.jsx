@@ -70,7 +70,7 @@ const ArticlePage = async ({ params }) => {
           <ArticleLinkList
             title="Keep reading"
             articles={article.fields.related}
-            className="mt-16 pt-10 border-t border-slate-200"
+            className="mt-12 pt-10 border-t border-slate-200"
           />
         </article>
       </div>
