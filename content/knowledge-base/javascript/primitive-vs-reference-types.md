@@ -29,12 +29,15 @@ gotchas:
     slug: state-mutation-no-rerender
     errorMessage:
     cause: >-
-      Mutating the existing object or array keeps the same reference. React
-      compares old and new state with Object.is, so it sees no change and
-      skips the re-render.
+      Mutating the existing object or array keeps the same reference. React compares old and new state with `Object.is`, so it sees no change and skips the re-render.
     fix: >-
-      Create a new object or array (spread, concat, map, filter) and pass
-      that to the setter instead of mutating in place.
+      Build a new array instead of mutating:
+
+      - spread — `[...arr, item]`
+      - `concat()`
+      - `map()` / `filter()`
+
+      Then pass the new array to the setter.
     category: JavaScript
     tag:
       - rendering
@@ -46,10 +49,9 @@ gotchas:
     slug: shallow-copy-shares-nested-refs
     errorMessage:
     cause: >-
-      Spread and Object.assign copy only the top level. Nested objects and arrays inside the copy are still the same references as in the original.
+      Spread and `Object.assign` copy only the top level. Nested objects and arrays inside the copy are still the same references as in the original.
     fix: >-
-      Use structuredClone for a real deep copy, or restructure state so
-      nested values don't need to be copied at all.
+      Use `structuredClone` for a real deep copy, or restructure state so nested values don't need to be copied at all.
     category: JavaScript
     tag:
       - immutability
