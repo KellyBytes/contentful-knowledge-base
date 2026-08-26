@@ -50,7 +50,7 @@ gotchas:
       - performance
   - id: 2144NQqo69gMlfBDlMD1kc
     symptom: >-
-      Code right after an `await` ran later than code that came right after the whole async function call, even though there's no timer anywhere.
+      My code after await ran later than the code right after calling the async function, with no timer involved.
     slug: await-yields-a-microtask-turn
     errorMessage:
     cause: >-
