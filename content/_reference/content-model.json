@@ -1,5 +1,125 @@
 [
   {
+    "id": "gotcha",
+    "name": "Gotcha",
+    "displayField": "symptom",
+    "fields": [
+      {
+        "id": "symptom",
+        "name": "Symptom",
+        "type": "Symbol",
+        "required": true,
+        "validations": [
+          {
+            "size": {
+              "min": 10,
+              "max": 120
+            }
+          }
+        ]
+      },
+      {
+        "id": "slug",
+        "name": "Slug",
+        "type": "Symbol",
+        "required": true,
+        "validations": [
+          {
+            "unique": true
+          },
+          {
+            "regexp": {
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "flags": null
+            },
+            "message": "Lowercase letters, numbers and hyphens only"
+          }
+        ]
+      },
+      {
+        "id": "errorMessage",
+        "name": "Error Message (Verbatim)",
+        "type": "Symbol",
+        "required": false,
+        "validations": [
+          {
+            "size": {
+              "min": null,
+              "max": 200
+            }
+          }
+        ]
+      },
+      {
+        "id": "cause",
+        "name": "Cause",
+        "type": "Text",
+        "required": true,
+        "validations": [
+          {
+            "size": {
+              "min": null,
+              "max": 600
+            }
+          }
+        ]
+      },
+      {
+        "id": "fix",
+        "name": "Fix",
+        "type": "Text",
+        "required": true,
+        "validations": [
+          {
+            "size": {
+              "min": null,
+              "max": 900
+            }
+          }
+        ]
+      },
+      {
+        "id": "category",
+        "name": "Category",
+        "type": "Link",
+        "required": true,
+        "linkType": "Entry",
+        "validations": [
+          {
+            "linkContentType": [
+              "category"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tag",
+        "name": "Tags",
+        "type": "Array",
+        "required": false,
+        "items": {
+          "type": "Link",
+          "validations": [
+            {
+              "linkContentType": [
+                "tag"
+              ]
+            }
+          ],
+          "linkType": "Entry"
+        },
+        "validations": [
+          {
+            "size": {
+              "min": null,
+              "max": 3
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "article",
     "name": "Article",
     "displayField": "title",
@@ -43,35 +163,6 @@
         ]
       },
       {
-        "id": "order",
-        "name": "Order",
-        "type": "Integer",
-        "required": false,
-        "validations": []
-      },
-      {
-        "id": "difficulty",
-        "name": "Difficulty",
-        "type": "Symbol",
-        "required": true,
-        "validations": [
-          {
-            "in": [
-              "Beginner",
-              "Intermediate",
-              "Advanced"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "summary",
-        "name": "Summary",
-        "type": "Symbol",
-        "required": true,
-        "validations": []
-      },
-      {
         "id": "tag",
         "name": "Tag",
         "type": "Array",
@@ -97,6 +188,42 @@
         ]
       },
       {
+        "id": "difficulty",
+        "name": "Difficulty",
+        "type": "Symbol",
+        "required": true,
+        "validations": [
+          {
+            "in": [
+              "Beginner",
+              "Intermediate",
+              "Advanced"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "summary",
+        "name": "Summary",
+        "type": "Symbol",
+        "required": true,
+        "validations": []
+      },
+      {
+        "id": "order",
+        "name": "Order",
+        "type": "Integer",
+        "required": false,
+        "validations": []
+      },
+      {
+        "id": "versionScope",
+        "name": "Version Scope",
+        "type": "Symbol",
+        "required": false,
+        "validations": []
+      },
+      {
         "id": "lastReviewed",
         "name": "Last Reviewed",
         "type": "Date",
@@ -104,11 +231,86 @@
         "validations": []
       },
       {
-        "id": "body",
-        "name": "Body",
-        "type": "Text",
-        "required": true,
+        "id": "readingTime",
+        "name": "Reading Time",
+        "type": "Integer",
+        "required": false,
         "validations": []
+      },
+      {
+        "id": "prerequisites",
+        "name": "Prerequisites",
+        "type": "Array",
+        "required": false,
+        "items": {
+          "type": "Link",
+          "validations": [
+            {
+              "linkContentType": [
+                "article"
+              ]
+            }
+          ],
+          "linkType": "Entry"
+        },
+        "validations": [
+          {
+            "size": {
+              "min": null,
+              "max": 3
+            }
+          }
+        ]
+      },
+      {
+        "id": "related",
+        "name": "Related Articles",
+        "type": "Array",
+        "required": false,
+        "items": {
+          "type": "Link",
+          "validations": [
+            {
+              "linkContentType": [
+                "article"
+              ]
+            }
+          ],
+          "linkType": "Entry"
+        },
+        "validations": [
+          {
+            "size": {
+              "min": null,
+              "max": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "gotchas",
+        "name": "Gotchas",
+        "type": "Array",
+        "required": false,
+        "items": {
+          "type": "Link",
+          "validations": [
+            {
+              "linkContentType": [
+                "gotcha"
+              ]
+            }
+          ],
+          "linkType": "Entry"
+        },
+        "validations": [
+          {
+            "size": {
+              "min": null,
+              "max": 6
+            }
+          }
+        ]
       },
       {
         "id": "interviewQuestions",
@@ -134,6 +336,13 @@
             }
           }
         ]
+      },
+      {
+        "id": "body",
+        "name": "Body",
+        "type": "Text",
+        "required": true,
+        "validations": []
       }
     ]
   },
