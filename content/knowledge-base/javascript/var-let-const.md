@@ -31,6 +31,7 @@ gotchas:
       If you need the contents locked too, use `Object.freeze()` — and remember
       it is shallow, so nested objects still change. If you only need to signal
       intent, `const` is already doing its job.
+    category: JavaScript
     tag:
       - immutability
   - id: fcsHcCinsnk9GYrcSAIhA
@@ -43,6 +44,7 @@ gotchas:
     fix: >-
       Change the loop counter to `let`. A `for` loop creates a fresh binding per
       iteration, so each callback captures its own.
+    category: JavaScript
     tag:
       - scope-and-closures
   - id: 6cle5aoIIvatit25By2rEl
@@ -59,6 +61,7 @@ gotchas:
     fix: >-
       Move the declaration above the first use. If a function reads it, make
       sure that function is called after the declaration line, not before.
+    category: JavaScript
     tag:
       - scope-and-closures
       - error-handling
@@ -75,6 +78,7 @@ gotchas:
       Do not use `typeof` as an existence check for block-scoped variables.
       Restructure so the declaration runs first, or check a property on an
       object instead.
+    category: JavaScript
     tag:
       - scope-and-closures
       - error-handling

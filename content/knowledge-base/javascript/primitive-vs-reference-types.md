@@ -30,7 +30,7 @@ gotchas:
     errorMessage:
     cause: >-
       Mutating the existing object or array keeps the same reference. React compares old and new state with `Object.is`, so it sees no change and skips the re-render.
-    fix: >-
+    fix: |-
       Build a new array instead of mutating:
 
       - spread — `[...arr, item]`

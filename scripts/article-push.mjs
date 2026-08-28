@@ -1,5 +1,6 @@
 import matter from 'gray-matter';
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import { entryLink, getClient, getDefaultLocale } from './lib/contentful.mjs';
 
 const CONTENT_TYPE = 'article';
@@ -12,10 +13,38 @@ const QUESTION_MAX = 5;
 const SHORT_ANSWER_MAX = 600;
 const QUESTION_TYPE = 'interviewQuestion';
 
+const GOTCHA_TYPE = 'gotcha';
+const GOTCHA_MAX = 6;
+const SYMPTOM_MIN = 10;
+const SYMPTOM_MAX = 120;
+const ERROR_MESSAGE_MAX = 200;
+const CAUSE_MAX = 600;
+const FIX_MAX = 900;
+/** A gotcha allows three tags; an article allows four (TAG_MAX). Not the same limit. */
+const GOTCHA_TAG_MAX = 3;
+/** Every article that can link a gotcha, for the cross-article consistency check. */
+const ARTICLE_ROOT = 'content/knowledge-base';
+/** The gotcha fields the frontmatter owns, in the order the report should list them. */
+const GOTCHA_FIELDS = [
+  'symptom',
+  'slug',
+  'errorMessage',
+  'cause',
+  'fix',
+  'category',
+  'tag',
+];
+
 /** Optional fields sent only when the frontmatter carries them. */
 const MANAGED_OPTIONAL = ['order', 'versionScope'];
 /** Derived on every push, so it is never worth diffing. */
 const DERIVED = 'lastReviewed';
+/**
+ * Child links get their own report, never the generic field diff. A dry run
+ * never syncs children, so a pending one has no link yet and a plain diff would
+ * show it as a removal.
+ */
+const CHILD_FIELDS = ['interviewQuestions', 'gotchas'];
 /** Cut long scalars in the dry-run report at this width. */
 const DISPLAY_MAX = 80;
 /** Show the actual body lines only when the change is small enough to read. */
@@ -73,11 +102,274 @@ async function syncQuestions(client, locale, list) {
   return links;
 }
 
+/** A blank scalar parses as null, which is not a value worth sending. */
+const hasText = value => typeof value === 'string' && value.trim() !== '';
+
+/**
+ * Look an existing gotcha up by slug. Used only to refuse a duplicate before
+ * creating one — never to resolve a gotcha that already carries an id, because
+ * a near match would overwrite an unrelated entry.
+ */
+async function findGotchaBySlug(client, slug) {
+  const page = await client.entry.getMany({
+    query: { content_type: GOTCHA_TYPE, 'fields.slug': slug, limit: 1 },
+  });
+  return page.items[0] ?? null;
+}
+
+/** The gotcha payload, with the empty optionals left out rather than nulled. */
+function gotchaFields(g, locale, categories, tags) {
+  const fields = {
+    symptom: { [locale]: g.symptom },
+    slug: { [locale]: g.slug },
+    cause: { [locale]: g.cause },
+    fix: { [locale]: g.fix },
+    category: { [locale]: entryLink(categories[g.category]) },
+  };
+
+  // `errorMessage:` with no value parses as null. Leave the key out of the
+  // payload rather than sending { [locale]: null }.
+  if (hasText(g.errorMessage)) {
+    fields.errorMessage = { [locale]: g.errorMessage };
+  }
+
+  if (Array.isArray(g.tag) && g.tag.length > 0) {
+    fields.tag = { [locale]: g.tag.map(name => entryLink(tags[name])) };
+  }
+
+  return fields;
+}
+
+/**
+ * Create or update each gotcha, then publish it.
+ * Mutates `list` to record new ids so the caller can write them back.
+ *
+ * Unlike a question, a gotcha is shared: several articles link the same entry,
+ * so writing one changes every article that references it. Two guards make that
+ * safe, and neither may be dropped — the caller runs the cross-article
+ * consistency check before this is reached, and the create path below refuses a
+ * slug that already exists in the space.
+ */
+async function syncGotchas(client, locale, list, categories, tags) {
+  const links = [];
+
+  for (const g of list) {
+    const fields = gotchaFields(g, locale, categories, tags);
+
+    let entry;
+
+    if (g.id) {
+      const current = await client.entry.get({ entryId: g.id });
+      entry = await client.entry.update(
+        { entryId: g.id },
+        { ...current, fields },
+      );
+    } else {
+      const existing = await findGotchaBySlug(client, g.slug);
+      if (existing) {
+        throw new Error(
+          `gotcha slug "${g.slug}" already exists in Contentful (${existing.sys.id}).\n` +
+            '  Link the existing entry instead of creating a new one: add\n' +
+            `  \`id: ${existing.sys.id}\` to the gotcha block, and copy the block\n` +
+            '  verbatim from the article that already has it.',
+        );
+      }
+
+      entry = await client.entry.create(
+        { contentTypeId: GOTCHA_TYPE },
+        { fields },
+      );
+      g.id = entry.sys.id; // recorded back into frontmatter by the caller
+      console.log(`  created gotcha: ${entry.sys.id} (${g.slug})`);
+    }
+
+    if (!isUpToDate(entry)) {
+      entry = await client.entry.publish({ entryId: entry.sys.id }, entry);
+    }
+
+    links.push(entryLink(entry.sys.id));
+  }
+
+  return links;
+}
+
 async function readJson(file) {
   return JSON.parse(await fs.readFile(file, 'utf8'));
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
+
+/** Report paths the way they are typed on the command line, on every platform. */
+const posix = file => file.split(path.sep).join('/');
+
+/**
+ * Walk for .md files by hand. `fs.glob` and readdir's `recursive` option are
+ * both newer than the Node this has to run on, and a dependency is not worth it.
+ */
+async function findMarkdownFiles(dir) {
+  const found = [];
+
+  for (const entry of await fs.readdir(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) found.push(...(await findMarkdownFiles(full)));
+    else if (entry.isFile() && entry.name.endsWith('.md')) found.push(full);
+  }
+
+  return found;
+}
+
+/**
+ * Compare the parsed values, not the YAML. Two copies written with different
+ * scalar styles can still mean the same thing - and, more importantly, two that
+ * look alike can parse differently, which is the case that matters.
+ */
+const normalizeGotcha = g => ({
+  symptom: g.symptom ?? null,
+  slug: g.slug ?? null,
+  // An omitted key and an empty key both mean "no error message".
+  errorMessage: hasText(g.errorMessage) ? g.errorMessage : null,
+  cause: g.cause ?? null,
+  fix: g.fix ?? null,
+  category: g.category ?? null,
+  // Order matters: it is sent to Contentful as written.
+  tag: Array.isArray(g.tag) ? g.tag : [],
+});
+
+const describeValue = (key, value) => {
+  if (value == null) return '(missing)';
+  if (key === 'tag') return `[${value.join(', ')}]`;
+  return JSON.stringify(truncate(value));
+};
+
+/**
+ * Show two copies of the same field so the difference is actually visible.
+ *
+ * `truncate` collapses whitespace, which is fatal here: the most common way for
+ * two copies to drift is a folded scalar where the other is literal, and that
+ * difference is nothing but line breaks. So spell the breaks out, and cut the
+ * window around the first character that differs rather than at the start -
+ * otherwise both sides show the same opening words and say nothing.
+ */
+function contrast(mine, theirs) {
+  const a = String(mine);
+  const b = String(theirs);
+
+  let at = 0;
+  while (at < a.length && at < b.length && a[at] === b[at]) at += 1;
+
+  const start = Math.max(0, at - Math.floor(DISPLAY_MAX / 4));
+
+  const window = text => {
+    // Only the breaks: glyphing every space would drown the line in dots.
+    const shown = text
+      .slice(start, start + DISPLAY_MAX)
+      .replace(/\n/g, '⏎')
+      .replace(/\t/g, WS_GLYPH['\t']);
+    const head = start > 0 ? '…' : '';
+    const tail = start + DISPLAY_MAX < text.length ? '…' : '';
+    return `${head}${shown}${tail}`;
+  };
+
+  return [window(a), window(b)];
+}
+
+/**
+ * Collect every article that links the same gotcha id and compare the copies.
+ *
+ * A gotcha entry is shared, so writing it changes every article that references
+ * it. When the copies disagree, which one is correct is a human decision -
+ * abort without writing rather than picking one. Returns id -> the other files
+ * that link it, so the dry-run report can show the blast radius even when the
+ * copies agree.
+ */
+async function collectSharedGotchas(filePath, gotchas) {
+  const linked = gotchas.filter(g => g.id);
+  if (linked.length === 0) return new Map();
+
+  const self = path.resolve(filePath);
+  const byId = new Map();
+
+  for (const file of await findMarkdownFiles(ARTICLE_ROOT)) {
+    if (path.resolve(file) === self) continue;
+
+    const { data } = matter(await fs.readFile(file, 'utf8'));
+    const list = Array.isArray(data.gotchas) ? data.gotchas : [];
+
+    for (const block of list) {
+      if (!block?.id) continue;
+      if (!byId.has(block.id)) byId.set(block.id, []);
+      byId.get(block.id).push({ file: posix(file), block });
+    }
+  }
+
+  const alsoLinkedBy = new Map();
+  const problems = [];
+
+  for (const g of linked) {
+    const others = byId.get(g.id) ?? [];
+    alsoLinkedBy.set(
+      g.id,
+      others.map(other => other.file),
+    );
+
+    const mine = normalizeGotcha(g);
+
+    for (const other of others) {
+      const theirs = normalizeGotcha(other.block);
+      const differing = GOTCHA_FIELDS.filter(
+        key => JSON.stringify(mine[key]) !== JSON.stringify(theirs[key]),
+      );
+
+      if (differing.length > 0) {
+        problems.push({
+          id: g.id,
+          slug: g.slug,
+          file: other.file,
+          differing,
+          mine,
+          theirs,
+        });
+      }
+    }
+  }
+
+  if (problems.length > 0) {
+    const lines = [
+      `${posix(filePath)}`,
+      '  Shared gotchas must be identical in every article that links them.',
+    ];
+
+    for (const p of problems) {
+      lines.push(`\n  gotcha ${p.id} (${p.slug}) disagrees with:`);
+      lines.push(`    ${p.file}`);
+
+      for (const key of p.differing) {
+        // A missing side, or a tag list, is readable as-is. Two present strings
+        // need to be lined up against each other to see where they part.
+        if (key === 'tag' || p.mine[key] == null || p.theirs[key] == null) {
+          lines.push(
+            `      ${key}: ${describeValue(key, p.mine[key])} vs ${describeValue(key, p.theirs[key])}`,
+          );
+          continue;
+        }
+
+        const [here, there] = contrast(p.mine[key], p.theirs[key]);
+        lines.push(`      ${key}:`);
+        lines.push(`        this file  ${here}`);
+        lines.push(`        other      ${there}`);
+      }
+    }
+
+    lines.push(
+      '\n  Which copy is correct is a human decision. Fix the frontmatter so the',
+      '  blocks match, then push again. Nothing was written.',
+    );
+
+    throw new Error(lines.join('\n'));
+  }
+
+  return alsoLinkedBy;
+}
 
 // Catch everything Contentful would reject, before spending a round trip.
 // Collect all problems so one run reports them all instead of one at a time.
@@ -161,6 +453,93 @@ function validate(fm, body, categories, tags) {
     else if (q.shortAnswer.length > SHORT_ANSWER_MAX) {
       errors.push(
         `${at}.shortAnswer is ${q.shortAnswer.length} chars (max ${SHORT_ANSWER_MAX})`,
+      );
+    }
+  });
+
+  errors.push(...validateGotchas(fm, categories, tags));
+
+  return errors;
+}
+
+/**
+ * Gotcha limits are its own, not the article's. In particular a gotcha allows
+ * three tags where an article allows four - hence GOTCHA_TAG_MAX, not TAG_MAX.
+ */
+function validateGotchas(fm, categories, tags) {
+  const errors = [];
+  const gotchas = Array.isArray(fm.gotchas) ? fm.gotchas : [];
+
+  if (gotchas.length > GOTCHA_MAX) {
+    errors.push(`gotchas has ${gotchas.length} items (max ${GOTCHA_MAX})`);
+  }
+
+  const seenSlugs = new Set();
+
+  gotchas.forEach((g, i) => {
+    const at = `gotchas[${i}]`;
+
+    if (!hasText(g.symptom)) errors.push(`${at}.symptom is required`);
+    else if (
+      g.symptom.length < SYMPTOM_MIN ||
+      g.symptom.length > SYMPTOM_MAX
+    ) {
+      errors.push(
+        `${at}.symptom is ${g.symptom.length} chars (${SYMPTOM_MIN}-${SYMPTOM_MAX})`,
+      );
+    }
+
+    if (!hasText(g.slug)) errors.push(`${at}.slug is required`);
+    else {
+      if (!SLUG_PATTERN.test(g.slug)) {
+        errors.push(`${at}.slug "${g.slug}" must be lowercase kebab-case`);
+      }
+      // Two blocks in one file sharing a slug is always a mistake: the slug is
+      // unique across the space, so they cannot both be right.
+      if (seenSlugs.has(g.slug)) {
+        errors.push(`${at}.slug "${g.slug}" is used twice in this file`);
+      }
+      seenSlugs.add(g.slug);
+    }
+
+    if (!hasText(g.cause)) errors.push(`${at}.cause is required`);
+    else if (g.cause.length > CAUSE_MAX) {
+      errors.push(`${at}.cause is ${g.cause.length} chars (max ${CAUSE_MAX})`);
+    }
+
+    if (!hasText(g.fix)) errors.push(`${at}.fix is required`);
+    else if (g.fix.length > FIX_MAX) {
+      errors.push(`${at}.fix is ${g.fix.length} chars (max ${FIX_MAX})`);
+    }
+
+    // Optional, but a value that is present still has to fit.
+    if (hasText(g.errorMessage) && g.errorMessage.length > ERROR_MESSAGE_MAX) {
+      errors.push(
+        `${at}.errorMessage is ${g.errorMessage.length} chars (max ${ERROR_MESSAGE_MAX})`,
+      );
+    }
+
+    if (!g.category) errors.push(`${at}.category is required`);
+    else if (!categories[g.category]) {
+      errors.push(
+        `${at}: unknown category "${g.category}".\n    Known: ${Object.keys(categories).join(', ')}`,
+      );
+    }
+
+    const tagList = Array.isArray(g.tag) ? g.tag : [];
+    if (tagList.length > GOTCHA_TAG_MAX) {
+      errors.push(
+        `${at}.tag has ${tagList.length} entries (max ${GOTCHA_TAG_MAX})`,
+      );
+    }
+    if (new Set(tagList).size !== tagList.length) {
+      errors.push(`${at}.tag contains duplicates`);
+    }
+
+    const unknownTags = tagList.filter(name => !tags[name]);
+    if (unknownTags.length > 0) {
+      errors.push(
+        `${at}: unknown tag(s): ${unknownTags.join(', ')}.\n    Known: ${Object.keys(tags).join(', ')}`,
       );
     }
   });
@@ -348,6 +727,89 @@ function reportQuestions(questions) {
   console.log(`\n  interviewQuestions: ${linked} linked${suffix}`);
 }
 
+const gotchaLabel = (kind, key) => `      ${kind.padEnd(9)}  ${key}`;
+const gotchaDetail = text => `                   ${text}`;
+
+/**
+ * Gotchas get a per-entry report rather than a count, because writing one
+ * changes every article that links it. The articles sharing each entry are
+ * listed even when the copies agree - that is the blast radius of the push,
+ * and it is the thing worth seeing before a write.
+ */
+async function reportGotchas(client, locale, gotchas, ctx) {
+  const linked = gotchas.filter(g => g.id).length;
+  const pending = gotchas.length - linked;
+  const suffix = pending > 0 ? `, ${pending} would be created` : '';
+  console.log(`\n  gotchas: ${linked} linked${suffix}`);
+
+  for (const g of gotchas) {
+    const where = g.id ? g.id : 'would create';
+    console.log(`\n    ${g.slug} (${where})`);
+
+    const others = ctx.alsoLinkedBy.get(g.id) ?? [];
+    if (others.length > 0) {
+      console.log(`      also linked by: ${others.join(', ')}`);
+    }
+
+    if (!g.id) {
+      // The same lookup the real push runs before creating. Read-only.
+      const existing = await findGotchaBySlug(client, g.slug);
+      console.log(
+        existing
+          ? `      slug already exists in Contentful (${existing.sys.id}) — link it instead`
+          : '      no existing gotcha with this slug',
+      );
+      continue;
+    }
+
+    let current;
+    try {
+      current = await client.entry.get({ entryId: g.id });
+    } catch (err) {
+      if (isNotFound(err)) {
+        throw new Error(
+          `gotcha id ${g.id} (${g.slug}) does not exist in Contentful.\n` +
+            `  ${posix(ctx.filePath)}\n` +
+            '  Fix or remove the id in the frontmatter.',
+        );
+      }
+      throw err;
+    }
+
+    const next = gotchaFields(g, locale, ctx.categories, ctx.tags);
+    const unchanged = [];
+    let changed = 0;
+
+    for (const key of GOTCHA_FIELDS) {
+      const before = current.fields[key]?.[locale];
+      const after = next[key]?.[locale];
+
+      if (JSON.stringify(before) === JSON.stringify(after)) {
+        if (before !== undefined) unchanged.push(key);
+        continue;
+      }
+
+      changed += 1;
+      console.log(gotchaLabel(before === undefined ? 'new' : 'changed', key));
+      if (before !== undefined) {
+        console.log(gotchaDetail(`- ${formatField(key, before, ctx.lookups)}`));
+      }
+      console.log(
+        gotchaDetail(
+          after === undefined
+            ? '+ (removed)'
+            : `+ ${formatField(key, after, ctx.lookups)}`,
+        ),
+      );
+    }
+
+    if (changed === 0) console.log('      unchanged');
+    else if (unchanged.length > 0) {
+      console.log(gotchaLabel('unchanged', unchanged.join(', ')));
+    }
+  }
+}
+
 /** Anything push does not send survives the update, because the fields merge. */
 function reportUntouched(current, fields, locale) {
   const kept = MANAGED_OPTIONAL.filter(
@@ -371,7 +833,7 @@ function reportUpdate(current, fields, locale, lookups, fullDiff) {
   const changes = [];
 
   for (const key of Object.keys(fields)) {
-    if (key === DERIVED || key === 'interviewQuestions') continue;
+    if (key === DERIVED || CHILD_FIELDS.includes(key)) continue;
 
     const before = current.fields[key]?.[locale];
     const after = fields[key][locale];
@@ -417,7 +879,7 @@ function reportUpdate(current, fields, locale, lookups, fullDiff) {
 
 function reportCreate(fields, locale, lookups) {
   for (const key of Object.keys(fields)) {
-    if (key === 'interviewQuestions') continue;
+    if (CHILD_FIELDS.includes(key)) continue;
 
     const value = fields[key][locale];
     const pad = key.padEnd(14);
@@ -471,12 +933,24 @@ async function main() {
   const questions = Array.isArray(fm.interviewQuestions)
     ? fm.interviewQuestions
     : [];
-  const idsBefore = questions.map(q => q.id ?? null);
+  const gotchas = Array.isArray(fm.gotchas) ? fm.gotchas : [];
+
+  const questionIdsBefore = questions.map(q => q.id ?? null);
+  const gotchaIdsBefore = gotchas.map(g => g.id ?? null);
+
+  // Gotchas are shared, so a write here reaches every article that links one.
+  // Refuse before anything is written when the copies disagree; the map it
+  // returns is the blast radius, which the dry-run report shows either way.
+  const alsoLinkedBy = await collectSharedGotchas(filePath, gotchas);
 
   // Children first: the article needs their ids to build its links.
   const questionLinks = dryRun
     ? questions.filter(q => q.id).map(q => entryLink(q.id))
     : await syncQuestions(client, locale, questions);
+
+  const gotchaLinks = dryRun
+    ? gotchas.filter(g => g.id).map(g => entryLink(g.id))
+    : await syncGotchas(client, locale, gotchas, categories, tags);
 
   const fields = {
     title: { [locale]: fm.title },
@@ -487,6 +961,8 @@ async function main() {
     category: { [locale]: entryLink(categories[fm.category]) },
     tag: { [locale]: fm.tag.map(name => entryLink(tags[name])) },
     interviewQuestions: { [locale]: questionLinks },
+    // Markdown order is the display order; send it through unchanged.
+    gotchas: { [locale]: gotchaLinks },
     lastReviewed: { [locale]: today() },
   };
 
@@ -501,11 +977,13 @@ async function main() {
       categoryNameById: invert(categories),
       tagNameById: invert(tags),
     };
+    const gotchaCtx = { alsoLinkedBy, lookups, categories, tags, filePath };
 
     if (!fm.contentfulEntryId) {
       console.log(`[dry-run] CREATE ${fm.slug}\n`);
       reportCreate(fields, locale, lookups);
       reportQuestions(questions);
+      await reportGotchas(client, locale, gotchas, gotchaCtx);
       return;
     }
 
@@ -537,12 +1015,15 @@ async function main() {
     reportUpdate(current, fields, locale, lookups, fullDiff);
     reportUntouched(current, fields, locale);
     reportQuestions(questions);
+    await reportGotchas(client, locale, gotchas, gotchaCtx);
     return;
   }
 
-  // syncQuestions may have assigned new ids - persist them before touching the article, so a failure below doesn't orphan the entries we just created.
-  const idsChanged = questions.some((q, i) => q.id !== idsBefore[i]);
-  if (idsChanged) {
+  // The child syncs may have assigned new ids - persist them before touching the article, so a failure below doesn't orphan the entries we just created.
+  const childIdsChanged =
+    questions.some((q, i) => q.id !== questionIdsBefore[i]) ||
+    gotchas.some((g, i) => g.id !== gotchaIdsBefore[i]);
+  if (childIdsChanged) {
     await fs.writeFile(filePath, matter.stringify(content, fm));
   }
 

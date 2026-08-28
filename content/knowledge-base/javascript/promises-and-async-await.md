@@ -47,7 +47,6 @@ gotchas:
     category: JavaScript
     tag:
       - error-handling
-      - async
   - id: IFramtnLOBWo7yMeER1Xz
     symptom: >-
       My `try/catch` didn't catch an error that happened while parsing the response body.
@@ -59,8 +58,8 @@ gotchas:
       Use `return await res.json()` inside a `try` block, not `return res.json()`, so a failure surfaces inside the same `catch`.
     category: JavaScript
     tag:
-      - error-handling
       - async
+      - error-handling
   - id: 5iAXCceruP0OrUWFLFfQe
     symptom: >-
       I used `array.forEach` with an async callback expecting it to wait, but the loop finished before the requests completed.
