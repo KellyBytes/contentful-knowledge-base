@@ -54,15 +54,19 @@ difficulty: Intermediate
 summary: >-
   A closure is a function that keeps access to the variables of the scope it was
   created in, even after that scope has finished running.
-contentfulEntryId: xu0KrzEfJQF2mtgpf3wYd
+# contentfulEntryId: written back by the push script. Never write it by hand.
 order: 40
 interviewQuestions:
-  - id: 5iVimjqCU5OLsi2XcC50yY
-    question: What is a closure?
+  - question: What is a closure?
     shortAnswer: >-
       ...
 ---
 ```
+
+**Never copy an id out of this sample or out of another article.**
+`contentfulEntryId`, `interviewQuestions[].id`, and `gotchas[].id` are all written
+back by the push script. A new article and a new child entry carry no id key at
+all — a copied id makes the push overwrite whatever entry it belongs to.
 
 | Key                       | Rule                                                                                         |
 | ------------------------- | -------------------------------------------------------------------------------------------- | -------------- | ---------- |
@@ -75,7 +79,7 @@ interviewQuestions:
 | `summary`                 | **≤256 chars — this is a Symbol, not a Text field.** 1–2 sentences, plain prose, no markdown |
 | `order`                   | Integer. Position within the category                                                        |
 | `contentfulEntryId`       | Written by the push script. **Never write or edit this by hand**                             |
-| `interviewQuestions[].id` | Same — leave empty (`""`) for new questions                                                  |
+| `interviewQuestions[].id` | Same. A new question has **no `id` key at all** — omit the line                        |
 
 `lastReviewed` is derived by the push script and must not appear in frontmatter.
 
@@ -109,9 +113,20 @@ generated from Contentful.
 
 ---
 
+## YAML scalar style
+
+- Use `|-` (literal) for any `cause` or `fix` that contains a list or a
+  deliberate line break. `>-` (folded) collapses single newlines into spaces,
+  which turns a bullet list into one run-on line.
+- Use `>-` only for prose with no internal structure.
+- `symptom` is a single line with no breaks, so `>-` is always fine there.
+
+---
+
 ## Article shape
 
-There is no template file. Before drafting, read
+`_reference/article-template.md` specifies the front matter and the child
+entries; the body is specified here. Before drafting, read
 `knowledge-base/javascript/closures-explained.md` in full — it is the reference
 implementation of everything below. Match its shape and its voice, not its
 headings: section titles are specific to each article
@@ -119,10 +134,19 @@ headings: section titles are specific to each article
 
 Every article follows the same arc. Section names vary; the sequence does not.
 
-1. **Opening — no heading.** Two to four short paragraphs. Define the thing in
-   one sentence, then separate it from the concept it gets confused with (scope
-   vs closure; declaration vs assignment). Close by saying when it actually
-   becomes visible in real code.
+1. **Opening — no heading. Start with a puzzle, not a definition.** One line
+   inviting a prediction ("Run this and predict what it logs before reading
+   on."), then a fenced `js` block short enough to hold in your head. Follow it
+   with one paragraph on what actually happens and why it surprises, and only
+   then one paragraph that names and defines the thing — the reader has to see
+   the behaviour before a definition means anything. Close by declaring the
+   shape of what follows when there is one ("those are the only three
+   differences"). `knowledge-base/javascript/closures-explained.md` is the
+   reference implementation.
+
+   When the topic is routinely confused with a neighbour, that separation is
+   its own section straight after the opening, not part of it
+   (`## Scope and closure are not the same thing`).
 2. **`## The <object> analogy`** — one concrete, physical, non-technical
    metaphor, followed by one or two refinements that keep it honest ("the
    backpack holds the actual variables, not photocopies").
@@ -139,8 +163,36 @@ Every article follows the same arc. Section names vary; the sequence does not.
 8. **`## The rule of thumb`** — the closing decision heuristic. Not a summary.
    Give the reader something to _do_ when they next hit this.
 
-Target 1,800–2,200 words. Shorter is fine when the topic is genuinely small;
-padding to reach a number is not.
+### Length
+
+There is no target. Existing articles run roughly 1,200–1,800 words including
+code, and the length follows from how wide the topic is — it is not a number to
+write towards. A word count stated as a goal only ever produces padding.
+
+Two boundaries are worth checking, because each usually means the **scope** is
+wrong rather than the prose:
+
+- **Under ~1,000 words** the topic is probably too thin to stand alone. Check
+  `_reference/topic-ownership.md` and consider making it a section of an
+  existing article instead.
+- **Over ~2,200 words** it probably wants to be two articles. Look for the
+  natural split rather than cutting sentences.
+
+### Difficulty
+
+`difficulty` is decided by **how much the reader has to know already**, never by
+length. A long Beginner article and a short Intermediate one are both normal —
+`primitive-vs-reference-types` (Beginner, 1,593 words) is longer than four of the
+five Intermediate articles.
+
+- **Beginner** — needs nothing beyond basic JavaScript syntax.
+- **Intermediate** — assumes the reader has understood the Beginner articles in
+  the same category.
+- **Advanced** — for a reader who already knows the topic's fundamentals; goes
+  into edge cases, performance, or specification detail.
+
+**`Advanced` is provisional** — no article has used it yet. Revisit the
+definition when one does.
 
 ### Overlapping topics
 
@@ -266,6 +318,34 @@ their own. Never repeat a body section verbatim.
 
 ---
 
+## Gotcha blocks
+
+- `cause` and `fix` are rendered through `components/Markdown.jsx`, so the same
+  rules apply: fenced code blocks must declare a language, and `#` headings are
+  never used. Keep them to prose, lists, and inline code.
+- A new gotcha has **no `id` key at all** — omit the line. The push script
+  creates the entry and writes the id back into the file.
+- A reused gotcha carries the existing id and a copy of the block that is
+  **identical** to the article it came from. Copy it verbatim; the push aborts
+  if any two copies disagree.
+- `category` is required on every gotcha, and it is the gotcha's own category —
+  not necessarily the article's.
+- A gotcha allows **three** tags. An article allows four. Different limits.
+- Gotcha slugs are unique across the whole space. Grep `content/knowledge-base/`
+  before inventing one.
+
+---
+
+## Cross-references
+
+- `prerequisites` (max 3) and `related` (max 4) hold article **slugs**, not ids.
+- A referenced article must already have a `contentfulEntryId`. Referencing an
+  article that has never been pushed aborts the push.
+- An article cannot reference itself.
+- An empty list is sent as an empty list. Removing a slug removes the link.
+
+---
+
 ## Workflow
 
 ```bash
@@ -284,13 +364,18 @@ app, after review. Interview question child entries are published automatically
 - Read `_reference/categories.json` and `_reference/tags.json` before writing
   frontmatter. Do not work from memory — they are generated from Contentful.
 - Never modify an existing article's body unless explicitly asked.
-- Never invent a `contentfulEntryId` or an `interviewQuestions[].id`.
+- Never invent a `contentfulEntryId`, an `interviewQuestions[].id`, or a
+  `gotchas[].id`. A gotcha entry is shared by several articles, so a wrong id
+  there changes every article that links it.
 - Verify technical claims against MDN or the relevant spec before asserting
   them. If you cannot source a claim, say so rather than writing it confidently.
 - Before drafting, glob `knowledge-base/**/*.md` and read the **frontmatter
-  only** of the existing articles — title, slug, category, tag, summary, order.
-  Do not read article bodies; they will flood the context and you do not need
-  them to check for overlap.
+  only** of the existing articles — title, slug, category, tag, summary, order,
+  difficulty, and gotchas. The first five are for overlap; `order` and
+  `difficulty` place the new article against its siblings; `gotchas` is how you
+  find out whether a pitfall already has an entry to reuse rather than a
+  duplicate to create. Do not read article bodies; they will flood the context
+  and you do not need them to check for overlap.
 - Check the sibling articles in the category before drafting, so the analogy,
   the examples, and the `order` value do not collide with an existing one.
 - When a topic overlaps an existing article, decide which one owns it. Check

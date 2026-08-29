@@ -1,234 +1,295 @@
-# Knowledge Base Article Template
+# Knowledge Base Article Front Matter
 
-Last updated: 2026-08-23
-Applied to: `var-let-const`, `closures-explained`
+Last updated: 2026-08-28
+Applied to: every article under `content/knowledge-base/`
 
-This is the canonical specification for a knowledge base article. The `new-article`
-skill reads it before drafting; a human reads it before reviewing. When this file
-and a published article disagree, this file is right and the article needs fixing.
+This file specifies the **front matter and the child entries** — the fields, their
+limits, and the shape of a gotcha or an interview question block.
+
+**It does not cover how to write the body.** Structure, voice, and length live in
+`content/CLAUDE.md`, and that file is the only authority on them.
 
 Related reference:
 
-- `content/_reference/categories.json` — the fixed category list
-- `content/_reference/tags.json` — the fixed tag list and entry IDs
+- `content/CLAUDE.md` — authoring rules: body structure, voice, length, Markdown
 - `content/_reference/content-model.json` — exported Contentful content model
+- `content/_reference/categories.json` — the fixed category list
+- `content/_reference/tags.json` — the fixed tag list
 - `content/_reference/topic-ownership.md` — which topic belongs to which article
 
 ---
 
-## 1. Front matter
+## 1. How front matter reaches Contentful
 
-Pulled from the Contentful Article entry by `scripts/article-pull.mjs`. When adding
-fields by hand, match the Contentful field ID exactly — a mismatch is silently
-dropped on the next pull.
+The Markdown is the source of truth. `scripts/article-push.mjs` reads the front
+matter and sends it to Contentful; nothing is pulled back in the normal flow.
 
-### Scalar fields
+A key whose name does not match a field on the `article` content type is **not
+sent**, and the dry run names it:
 
-| Field               | Type                    | Notes                                                                                 |
-| ------------------- | ----------------------- | ------------------------------------------------------------------------------------- |
-| `contentType`       | —                       | Always `article`                                                                      |
-| `title`             | Short text              | Quote titles containing code: `'var, let, and const'`                                 |
-| `slug`              | Short text (unique)     | Lowercase, hyphenated                                                                 |
-| `category`          | Reference               | Single. Links to a Category entry                                                     |
-| `tag`               | Reference (many, max 3) | **Field ID is singular.** Not `tags`                                                  |
-| `difficulty`        | Short text              | `Beginner` / `Intermediate` / `Advanced`                                              |
-| `summary`           | Long text               | 2–3 sentences. **Doubles as the article's TL;DR**, so the body has no summary section |
-| `contentfulEntryId` | —                       | Auto-generated. Read it from the entry URL                                            |
-| `order`             | Integer                 | List position. Number in tens so entries can be inserted between                      |
-| `versionScope`      | Short text              | e.g. `ES2015 (ES6) and later; React examples target React 18+`                        |
-| `lastUpdated`       | Date                    |                                                                                       |
-| `readingTime`       | Integer                 | Minutes                                                                               |
+```
+warning: content/knowledge-base/javascript/<slug>.md: unknown frontmatter key(s): …
+warning:   not a field on the `article` content type — not sent, and nothing reads it.
+```
 
-### Reference fields (many)
+Always run the dry run and read the report before pushing:
 
-| Field                | Links to                 | Max |
-| -------------------- | ------------------------ | --- |
-| `prerequisites`      | Article (self-reference) | 3   |
-| `related`            | Article (self-reference) | 4   |
-| `gotchas`            | Gotcha                   | 6   |
-| `interviewQuestions` | InterviewQuestion        | —   |
+```bash
+npm run article:push -- content/knowledge-base/javascript/<slug>.md --dry-run
+```
 
-**Never put the same article in both `prerequisites` and `related`.** If A lists B as
-a prerequisite, B lists A as related. Keep the relationship one-directional.
+### Field order
+
+The order below is the order `scripts/article-push.mjs` sends the fields, which is
+also the order they appear on the dry run's `unchanged` line. Two of them are never
+written by hand:
+
+- **`body`** is the Markdown below the closing `---`, not a front matter key
+- **`lastReviewed`** is derived on every push. **It must never appear in front matter**
+
+Two keys are pipeline bookkeeping rather than content type fields, and come first:
+`contentType` is the marker the script validates, and `contentfulEntryId` is how it
+finds the entry.
 
 ---
 
-## 2. Body sections
+## 2. Skeleton
 
-★ required / ☆ conditional
+```yaml
+---
+contentType: article
+# contentfulEntryId: written back by the push script. Never write it by hand.
+title: Closures Explained # required, max 256
+slug: closures-explained # required, unique, lowercase kebab-case
+summary: >- # required, max 256 — folded: prose with no internal structure
+  A closure is a function that keeps access to the variables of the scope it
+  was created in, even after that scope has finished running.
+difficulty: Intermediate # required: Beginner | Intermediate | Advanced
+category: JavaScript # required, one of the eight in categories.json
+tag: # required, 1–4 from tags.json
+  - scope-and-closures
+  - state-management
+interviewQuestions: # max 5
+  - question: What is a closure? # a new question has no `id` key at all
+    shortAnswer: >- # required, max 600
+      A function that keeps access to the variables of the scope it was
+      defined in, even after that scope has finished running.
+gotchas: # max 6
+  - symptom: >- # a new gotcha has no `id` key at all
+      My loop callbacks all print the same final number, even though the
+      counter changed each time.
+    slug: var-loop-callback-shares-binding
+    cause: >- # folded — one paragraph, no structure
+      `var` gives the whole loop one shared binding. The callbacks run after
+      the loop finishes, so they all read the same finished value.
+    fix: |- # literal — this one has a list, so it must not be folded
+      Change the loop counter to `let`:
 
-### ★ Opening (no heading)
+      - a `for` loop creates a fresh binding per iteration
+      - each callback then captures its own
+    category: JavaScript # the gotcha's own category
+    tag: # max 3 — a gotcha allows three, an article four
+      - scope-and-closures
+prerequisites: # max 3, article slugs
+  - var-let-const
+related: [] # max 4, article slugs
+order: 40 # optional, integer, increments of ten
+versionScope: ES2015 (ES6) and later # optional, max 256
+readingTime: 12 # optional, integer, minutes
+---
 
-**Do not open with a definition.** Show working code or a symptom, and let the
-reader predict before you answer.
+The body starts here.
+```
 
-- Good: "Run this and guess the output before you read on."
-- Good: "Read this and explain how it is possible."
-- Bad: "A closure is a function that…"
-
-Close the opening by declaring how many things the article covers ("those are the
-only three differences"). It gives the reader a shape to hang the rest on.
-
-### ☆ Term disambiguation
-
-Only for topics routinely confused with a neighbour. One sentence each.
-Examples: scope vs closure, CSR vs SSR, authentication vs authorization.
-
-### ★ How it works
-
-Name the heading after the topic — `Difference 1: scope`, `The backpack analogy`.
-
-**Deciding whether to use a metaphor:**
-
-1. Is the subject an invisible runtime mechanism? If yes, a metaphor helps
-   (closures, the event loop, hoisting).
-2. Is the subject a choice between ways of writing something? If yes, a table and
-   real examples are faster (var/let/const, Grid vs Flexbox).
-3. **Can you write one paragraph on where the metaphor breaks?** If not, do not use it.
-
-Rule 3 is not optional. Naming the boundary often connects otherwise separate parts
-of the article — in `closures-explained`, the paragraph explaining that nothing is
-literally packed into the backpack sets up the memory section later.
-
-Diagrams are judged separately from metaphors. ASCII timelines and structure
-diagrams earn their place even in articles that use no metaphor at all.
-
-### ★ Code examples
-
-- One minimal runnable example, with output in comments
-- Short enough to fit on one screen
-- Follow it with a numbered walkthrough so each step is traceable
-
-### ☆ Use cases
-
-Number them (`Use case 1:` …). Three is the ceiling.
-**Three use cases push an article long** — check the length budget below.
-
-### ☆ Side-by-side comparison
-
-**Only when a real comparison exists.** Four to six axes.
-
-- Alternatives in one category: `var` / `let` / `const`, Grid / Flexbox
-- Opposed design choices: closures / classes, JWT / sessions
-
-Do not manufacture one for a standalone concept.
-
-### ★ The rule of thumb
-
-One or two lines, or three numbered items. Leave no ambiguity.
-Add one sentence on _why_ it works — that is what makes it stick (e.g. it is a
-signal to the next reader).
-
-### ☆ The cost / trade-offs
-
-Performance, memory, readability. Only when there is a real cost to name.
-
-### ★ Version and environment notes
-
-If nothing applies, write `No version-specific caveats.` **Never leave it blank.**
-Worth covering:
-
-- Which spec version introduced it (ES2015, ES2022, …)
-- Behaviour that changes by version (React 18 StrictMode double-invoking effects)
-- Script vs module, strict vs sloppy mode differences
-- Post-build behaviour, where compiled output diverges from source
-- How to verify — which DevTools panel, `node -v`, and so on
-
-### ★ Check yourself
-
-Two questions asking for the output of a snippet. Wrap answers in `<details>`.
-Each answer carries one or two sentences of _why_.
-
-### ★ Sources
-
-MDN, official documentation, the specification. Prefer primary sources.
+`order`, `versionScope`, and `readingTime` sit after the arrays because that is
+where the script appends them. Front matter key order does not affect what
+Contentful receives, so an existing article that groups them differently is fine
+and should be left alone.
 
 ---
 
-## 3. Referenced entries
+## 3. Article fields
 
-### Gotcha
+| Field                | Required | Type              | Limit          | Notes                                                                     |
+| -------------------- | -------- | ----------------- | -------------- | ------------------------------------------------------------------------- |
+| `contentType`        | ✔        | —                 |                | Always `article`. Bookkeeping, not a content type field                   |
+| `contentfulEntryId`  |          | —                 |                | **Written back by the push script. Never write or edit it by hand**       |
+| `title`              | ✔        | Symbol            | max 256        | Noun phrase, not a question. Quote titles containing code                 |
+| `slug`               | ✔        | Symbol, unique    |                | Lowercase kebab-case only — Contentful rejects anything else              |
+| `summary`            | ✔        | Symbol            | max 256        | **A Symbol, not a Text field.** 1–2 sentences, plain prose, no Markdown   |
+| `difficulty`         | ✔        | Symbol            |                | `Beginner` / `Intermediate` / `Advanced`                                  |
+| `body`               | ✔        | Text              |                | The Markdown below the closing `---`. Not a front matter key              |
+| `category`           | ✔        | Link → category   | exactly 1      | One of the eight names in `categories.json`. Never invent one             |
+| `tag`                | ✔        | Array&lt;Link&gt; | 1–4            | **Field ID is singular.** Not `tags`. Names from `tags.json`              |
+| `interviewQuestions` |          | Array&lt;Link&gt; | max 5          | See §5. A new question carries no `id`                                    |
+| `gotchas`            |          | Array&lt;Link&gt; | max 6          | See §4. A new gotcha carries no `id`                                      |
+| `prerequisites`      |          | Array&lt;Link&gt; | max 3          | Article **slugs**, not ids. See §6                                        |
+| `related`            |          | Array&lt;Link&gt; | max 4          | Article **slugs**, not ids. See §6                                        |
+| `lastReviewed`       | ✔        | Date              |                | **Derived on every push. Never write it in front matter**                 |
+| `order`              |          | Integer           |                | Position within the category                                              |
+| `versionScope`       |          | Symbol            | max 256        | e.g. `ES2015 (ES6) and later; React examples target React 18+`            |
+| `readingTime`        |          | Integer           |                | Minutes                                                                   |
 
-**Never inline these in the body.** They are separate entries, linked by reference.
-
-| Field          | Notes                                                                             |
-| -------------- | --------------------------------------------------------------------------------- |
-| `symptom`      | The **display field**. Write it in the **first person**. Max 120 chars            |
-| `slug`         | **Describes the symptom, never the article** — gotchas are shared across articles |
-| `errorMessage` | Only when the console prints something verbatim. Otherwise leave empty            |
-| `cause`        | One or two sentences                                                              |
-| `fix`          | Concrete. If there are several fixes, say when each applies                       |
-| `category`     | Reference. Same taxonomy as articles                                              |
-| `tag`          | Reference (many, max 3)                                                           |
-
-**Extraction test: is there a reproducible symptom?** An error message or a
-surprising output makes it a Gotcha. A general "be careful here" note stays in the body.
-
-**Overlap with the body:** when the concept itself is the gotcha, split the jobs —
-the **body explains why it happens**, the **Gotcha gives symptom → fix**. Keep the
-❌/✅ correction block out of the body; that belongs to the card.
-
-**Expect reuse.** One Gotcha can be referenced by several articles.
-`var-loop-callback-shares-binding` is shared by `var-let-const` and `closures-explained`.
-
-**Get the reverse lookup with `links_to_entry`.** Do not add an article reference
-field to Gotcha. A two-way reference will drift out of sync.
-
-### InterviewQuestion
-
-- `question` reads like something a person would actually search or ask
-- `shortAnswer` is what you could say out loud in 30–60 seconds
-- Cover what it _enables_, not only what it _is_
+**`order` uses increments of 10**, so an article can be inserted between two
+existing ones without renumbering. The sequence is pedagogical — the order someone
+should read them — not alphabetical.
 
 ---
 
-## 4. Length and style
+## 4. Gotcha blocks
 
-### Budget by difficulty
+**Never inline a gotcha in the body.** It is a separate entry, linked by reference.
 
-| Difficulty   | Words       | Reading time       |
-| ------------ | ----------- | ------------------ |
-| Beginner     | 1,200–1,800 | 8–10 min           |
-| Intermediate | 1,800–2,500 | 10–13 min          |
-| Advanced     | 2,500+      | consider splitting |
+| Field          | Required | Type              | Limit         | Notes                                                            |
+| -------------- | -------- | ----------------- | ------------- | ---------------------------------------------------------------- |
+| `id`           |          | —                 |               | Present only on a reused gotcha. **Omit the key entirely** on a new one |
+| `symptom`      | ✔        | Symbol            | 10–120 chars  | The **display field**. Write it in the **first person**          |
+| `slug`         | ✔        | Symbol, unique    |               | **Describes the symptom, never the article**                     |
+| `errorMessage` |          | Symbol            | max 200       | Only when the console prints something verbatim. **Otherwise omit the key** — an empty value parses as `null` |
+| `cause`        | ✔        | Text              | max 600       | One or two sentences                                             |
+| `fix`          | ✔        | Text              | max 900       | Concrete. If there are several fixes, say when each applies      |
+| `category`     | ✔        | Link → category   | exactly 1     | **The gotcha's own category** — not necessarily the article's    |
+| `tag`          |          | Array&lt;Link&gt; | max 3         | **Three, where an article allows four.** Different limits        |
 
-### Style
+`cause` and `fix` are rendered through `components/Markdown.jsx`, so fenced code
+blocks must declare a language and `#` headings are never used. Keep them to prose,
+lists, and inline code.
 
-- Paragraphs of two to three sentences
-- Sentences under 25 words, active voice
-- Define a term in plain words the first time it appears
-- Target Flesch-Kincaid Grade 8–9
-- Give the one sentence worth memorising its own bolded line
-  (e.g. **closures capture variables, not values**)
+### A new gotcha
+
+No `id` key at all. The push script creates the entry, publishes it, and writes the
+id back into this file.
+
+```yaml
+gotchas:
+  - symptom: I mutated my array in state directly, but React never re-rendered.
+    slug: state-mutation-no-rerender
+    cause: >-
+      Mutating the existing object or array keeps the same reference. React
+      compares old and new state with `Object.is`, so it sees no change.
+    fix: |-
+      Build a new array instead of mutating:
+
+      - spread — `[...arr, item]`
+      - `concat()`
+      - `map()` / `filter()`
+
+      Then pass the new array to the setter.
+    category: JavaScript
+    tag:
+      - rendering
+      - immutability
+```
+
+### A reused gotcha
+
+One gotcha entry is linked by several articles, so writing it changes every article
+that references it. Carry the existing id **and a copy of the block that is
+identical to the article it came from**. Copy it verbatim — never reword, tighten,
+or improve it.
+
+```yaml
+gotchas:
+  - id: fcsHcCinsnk9GYrcSAIhA
+    symptom: >-
+      My loop callbacks all print the same final number, even though the counter changed each time.
+    slug: var-loop-callback-shares-binding
+    cause: >-
+      `var` gives the whole loop one shared binding. The callbacks run after the
+      loop finishes, so they all read the same finished value.
+    fix: >-
+      Change the loop counter to `let`. A `for` loop creates a fresh binding per
+      iteration, so each callback captures its own.
+    category: JavaScript
+    tag:
+      - scope-and-closures
+```
+
+### What the push script refuses
+
+- **Copies that disagree.** If any two articles carry different copies of the same
+  gotcha id, the push aborts without writing and names the disagreeing files. Which
+  copy is correct is a human decision
+- **A duplicate slug.** Gotcha slugs are unique across the whole space. Creating one
+  whose slug already exists aborts and reports the existing id to link instead
+- A gotcha with an `id` is resolved by `sys.id` only, never by slug
+
+Before inventing a slug, grep `content/knowledge-base/` for it. A hit means the
+gotcha already exists and should be reused.
+
+### When something is a gotcha
+
+**Is there a reproducible symptom?** An error message or a surprising output makes
+it a gotcha. A general "be careful here" note stays in the body.
+
+When the concept itself is the gotcha, split the jobs: the **body explains why it
+happens**, the **gotcha gives symptom → fix**.
+
+**Do not add an article reference field to Gotcha.** Get the reverse lookup with
+`links_to_entry`; a two-way reference will drift out of sync.
 
 ---
 
-## 5. File locations
+## 5. Interview question blocks
 
-| Artifact            | Path                                             |
-| ------------------- | ------------------------------------------------ |
-| English article     | `content/knowledge-base/<category>/<slug>.md`    |
-| Japanese study note | `notes/ja/<category>/<slug>_ja.md` (git-ignored) |
-| Superseded draft    | `content/_archives/<slug>_v<n>.md`               |
-| This template       | `content/_reference/article-template.md`         |
+| Field         | Required | Type   | Limit   | Notes                                              |
+| ------------- | -------- | ------ | ------- | -------------------------------------------------- |
+| `id`          |          | —      |         | **Omit the key entirely** on a new question        |
+| `question`    | ✔        | Symbol |         | Reads like something a person would actually ask   |
+| `shortAnswer` | ✔        | Text   | max 600 | What you could say out loud in 30–60 seconds       |
 
-The Japanese note is a 1:1 mirror kept for the author's own understanding. It is not
-a published translation, so Contentful stays single-locale. Its front matter carries
-`slug` as the shared key and `sourceUpdated` as the English `lastUpdated` it was
-written against, which makes drift detectable with a short script.
+Unlike a gotcha, an interview question belongs to one article and is never shared.
+
+Removing a question from front matter unlinks it but does not delete the entry in
+Contentful. Those need manual cleanup.
 
 ---
 
-## 6. Pre-publish checklist
+## 6. Cross-references
 
-- [ ] The opening poses a problem rather than a definition
-- [ ] If a metaphor is used, its breaking point is written out
-- [ ] `versionScope` and the version notes section are both filled in
-- [ ] Check yourself has two questions
-- [ ] Every Gotcha `symptom` is first person and under 120 characters
-- [ ] No Gotcha `slug` names an article
-- [ ] Three tags or fewer, under the field ID `tag`
+`prerequisites` and `related` hold article **slugs**, not entry ids. The push script
+resolves them against the other files under `content/knowledge-base/` — it never
+asks Contentful.
+
+- `prerequisites` — max 3
+- `related` — max 4
+- A referenced article must already have a `contentfulEntryId`. Referencing one that
+  has never been pushed aborts with `Push <file> first.`
+- An article cannot reference itself
+- **An empty list is sent as an empty list.** Removing a slug removes the link
+
+**Never put the same article in both `prerequisites` and `related`.** If A lists B
+as a prerequisite, B lists A as related. Keep the relationship one-directional —
+this is an authoring convention, not something the script enforces.
+
+---
+
+## 7. YAML scalar style
+
+- **`|-` (literal)** for any `cause` or `fix` that contains a list or a deliberate
+  line break. `>-` collapses single newlines into spaces, which turns a bullet list
+  into one run-on line
+- **`>-` (folded)** only for prose with no internal structure
+- `symptom` is a single line with no breaks, so `>-` is always fine there
+
+The two copies of a shared gotcha are compared by their **parsed values**, so a
+folded block and a literal block holding the same text are not the same thing. That
+difference alone will abort a push.
+
+---
+
+## 8. Pre-publish checklist
+
+- [ ] `versionScope` is filled in
+- [ ] Four tags or fewer on the article, under the field ID `tag`
+- [ ] Three tags or fewer on each gotcha
+- [ ] Every gotcha `symptom` is first person and 10–120 characters
+- [ ] No gotcha `slug` names an article
+- [ ] Checked whether an existing gotcha can be reused, and copied it verbatim if so
+- [ ] New gotchas and questions carry no `id` key
 - [ ] No article appears in both `prerequisites` and `related`
-- [ ] Checked whether an existing Gotcha can be reused
-- [ ] In-body links match the real route (`/kb/[category]/[slug]`)
-- [ ] Length is within budget for the stated difficulty
+- [ ] `lastUpdated` and `lastReviewed` do not appear in front matter
+- [ ] `npm run article:push -- <path> --dry-run` reports no warnings and no surprises
+
+For everything about the body — structure, voice, length, Markdown — see
+`content/CLAUDE.md`.
