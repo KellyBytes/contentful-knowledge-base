@@ -15,7 +15,6 @@ summary: >-
 contentfulEntryId: xu0KrzEfJQF2mtgpf3wYd
 order: 40
 versionScope: ES2015 (ES6) and later; React examples target React 18+
-lastUpdated: 2026-08-23
 readingTime: 12
 prerequisites:
   - var-let-const

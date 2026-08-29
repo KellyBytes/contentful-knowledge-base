@@ -15,7 +15,6 @@ summary: >-
 contentfulEntryId: 64pOmxhp91mlZpZgNLaDCH
 order: 10
 versionScope: ES2015 (ES6) and later
-lastUpdated: 2026-08-23
 readingTime: 9
 prerequisites: []
 related:

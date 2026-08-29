@@ -35,8 +35,19 @@ const GOTCHA_FIELDS = [
   'tag',
 ];
 
+const PREREQUISITE_MAX = 3;
+const RELATED_MAX = 4;
+/** Article link arrays resolved from slugs in the frontmatter, in report order. */
+const ARTICLE_LINK_FIELDS = ['prerequisites', 'related'];
+/**
+ * Pipeline bookkeeping, not content type fields: `contentType` is the marker
+ * validate() checks, and `contentfulEntryId` is how the script finds the entry.
+ * Both belong in the frontmatter, so neither is an unknown key.
+ */
+const FRONTMATTER_EXTRAS = ['contentType', 'contentfulEntryId'];
+
 /** Optional fields sent only when the frontmatter carries them. */
-const MANAGED_OPTIONAL = ['order', 'versionScope'];
+const MANAGED_OPTIONAL = ['order', 'versionScope', 'readingTime'];
 /** Derived on every push, so it is never worth diffing. */
 const DERIVED = 'lastReviewed';
 /**
@@ -197,7 +208,17 @@ async function readJson(file) {
   return JSON.parse(await fs.readFile(file, 'utf8'));
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
+/**
+ * The local date, not UTC. `toISOString()` is always UTC, so an evening push
+ * anywhere west of Greenwich stamps tomorrow onto lastReviewed. The date that
+ * belongs on a review is the one on the wall behind the person doing it.
+ */
+const today = () => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+};
 
 /** Report paths the way they are typed on the command line, on every platform. */
 const posix = file => file.split(path.sep).join('/');
@@ -274,7 +295,53 @@ function contrast(mine, theirs) {
 }
 
 /**
- * Collect every article that links the same gotcha id and compare the copies.
+ * One pass over every article. The gotcha consistency check and the
+ * prerequisites / related resolution both need every article's frontmatter,
+ * and walking the tree twice for that would be waste.
+ *
+ * `bySlug` includes the article being pushed, because other articles may link
+ * it. `gotchaById` deliberately does not: the pushed file is the copy being
+ * compared, not one of the peers to compare it against.
+ */
+async function readArticleIndex(filePath) {
+  const self = path.resolve(filePath);
+  const bySlug = new Map();
+  const gotchaById = new Map();
+  const duplicateSlugs = [];
+
+  for (const file of await findMarkdownFiles(ARTICLE_ROOT)) {
+    const { data } = matter(await fs.readFile(file, 'utf8'));
+    const isSelf = path.resolve(file) === self;
+
+    if (data.slug) {
+      const seen = bySlug.get(data.slug);
+      if (seen) {
+        duplicateSlugs.push({
+          slug: data.slug,
+          files: [seen.file, posix(file)],
+        });
+      }
+      bySlug.set(data.slug, {
+        entryId: data.contentfulEntryId ?? null,
+        file: posix(file),
+      });
+    }
+
+    if (isSelf) continue;
+
+    for (const block of Array.isArray(data.gotchas) ? data.gotchas : []) {
+      if (!block?.id) continue;
+      if (!gotchaById.has(block.id)) gotchaById.set(block.id, []);
+      gotchaById.get(block.id).push({ file: posix(file), block });
+    }
+  }
+
+  return { bySlug, gotchaById, duplicateSlugs };
+}
+
+/**
+ * Compare this article's copy of each shared gotcha against every other article
+ * that links the same id.
  *
  * A gotcha entry is shared, so writing it changes every article that references
  * it. When the copies disagree, which one is correct is a human decision -
@@ -282,25 +349,9 @@ function contrast(mine, theirs) {
  * that link it, so the dry-run report can show the blast radius even when the
  * copies agree.
  */
-async function collectSharedGotchas(filePath, gotchas) {
+function collectSharedGotchas(filePath, gotchas, byId) {
   const linked = gotchas.filter(g => g.id);
   if (linked.length === 0) return new Map();
-
-  const self = path.resolve(filePath);
-  const byId = new Map();
-
-  for (const file of await findMarkdownFiles(ARTICLE_ROOT)) {
-    if (path.resolve(file) === self) continue;
-
-    const { data } = matter(await fs.readFile(file, 'utf8'));
-    const list = Array.isArray(data.gotchas) ? data.gotchas : [];
-
-    for (const block of list) {
-      if (!block?.id) continue;
-      if (!byId.has(block.id)) byId.set(block.id, []);
-      byId.get(block.id).push({ file: posix(file), block });
-    }
-  }
 
   const alsoLinkedBy = new Map();
   const problems = [];
@@ -371,9 +422,103 @@ async function collectSharedGotchas(filePath, gotchas) {
   return alsoLinkedBy;
 }
 
+/**
+ * Name the frontmatter keys that go nowhere.
+ *
+ * The known set comes from the exported content model rather than a list in
+ * here, so re-exporting the model is all it takes to teach the script about a
+ * new field. A warning, not an error: a stray key is worth knowing about, but
+ * it cannot break a push, and blocking on one would help nobody.
+ */
+function warnUnknownKeys(filePath, fm, contentModel) {
+  const article = contentModel.find(type => type.id === CONTENT_TYPE);
+  if (!article) return;
+
+  const known = new Set([
+    ...article.fields.map(field => field.id),
+    ...FRONTMATTER_EXTRAS,
+  ]);
+  const unknown = Object.keys(fm).filter(key => !known.has(key));
+  if (unknown.length === 0) return;
+
+  // stderr, so a loop over every article can collect these on their own.
+  console.warn(
+    `warning: ${posix(filePath)}: unknown frontmatter key(s): ${unknown.join(', ')}`,
+  );
+  console.warn(
+    `warning:   not a field on the \`${CONTENT_TYPE}\` content type — not sent, and nothing reads it.`,
+  );
+}
+
+/**
+ * prerequisites and related are article slugs in the frontmatter and entry
+ * links in Contentful. Everything needed to resolve them is already on disk,
+ * so a bad reference is caught here rather than by a rejected write.
+ */
+function validateArticleLinks(fm, index) {
+  const errors = [];
+  const limits = {
+    prerequisites: PREREQUISITE_MAX,
+    related: RELATED_MAX,
+  };
+
+  // Two files claiming one slug makes every reference to it ambiguous.
+  for (const { slug, files } of index.duplicateSlugs) {
+    errors.push(
+      `slug "${slug}" is used by two articles: ${files.join(' and ')}.\n` +
+        '    A reference to it would silently resolve to one of them.',
+    );
+  }
+
+  for (const key of ARTICLE_LINK_FIELDS) {
+    const slugs = Array.isArray(fm[key]) ? fm[key] : [];
+
+    if (slugs.length > limits[key]) {
+      errors.push(`${key} has ${slugs.length} entries (max ${limits[key]})`);
+    }
+    if (new Set(slugs).size !== slugs.length) {
+      errors.push(`${key} contains duplicates`);
+    }
+
+    slugs.forEach((slug, i) => {
+      const at = `${key}[${i}]`;
+
+      if (slug === fm.slug) {
+        errors.push(
+          `${at}: "${slug}" is this article — an article cannot reference itself`,
+        );
+        return;
+      }
+
+      const target = index.bySlug.get(slug);
+      if (!target) {
+        errors.push(
+          `${at}: unknown article slug "${slug}" — no file under ${ARTICLE_ROOT}/ has it`,
+        );
+        return;
+      }
+
+      if (!target.entryId) {
+        errors.push(
+          `${at}: "${slug}" has no contentfulEntryId yet.\n` +
+            `    Push ${target.file} first.`,
+        );
+      }
+    });
+  }
+
+  return errors;
+}
+
+/** Frontmatter slugs to entry links. Only safe once validate() has passed. */
+const linkArticles = (slugs, bySlug) =>
+  (Array.isArray(slugs) ? slugs : []).map(slug =>
+    entryLink(bySlug.get(slug).entryId),
+  );
+
 // Catch everything Contentful would reject, before spending a round trip.
 // Collect all problems so one run reports them all instead of one at a time.
-function validate(fm, body, categories, tags) {
+function validate(fm, body, categories, tags, index) {
   const errors = [];
 
   if (fm.contentType !== CONTENT_TYPE) {
@@ -434,6 +579,14 @@ function validate(fm, body, categories, tags) {
   if (fm.order != null && !Number.isInteger(fm.order)) {
     errors.push(`order must be an integer (got ${JSON.stringify(fm.order)})`);
   }
+
+  if (fm.readingTime != null && !Number.isInteger(fm.readingTime)) {
+    errors.push(
+      `readingTime must be an integer (got ${JSON.stringify(fm.readingTime)})`,
+    );
+  }
+
+  errors.push(...validateArticleLinks(fm, index));
 
   if (!body.trim()) errors.push('body is empty');
 
@@ -547,13 +700,21 @@ function validateGotchas(fm, categories, tags) {
   return errors;
 }
 
+/**
+ * Contentful drops an empty array field, so undefined and [] are the same.
+ * Without this, a field we send as [] reads back as undefined and every push
+ * looks like a change - which also means lastReviewed is bumped every time.
+ */
+const forCompare = value =>
+  Array.isArray(value) && value.length === 0 ? undefined : value;
+
 /** Compare only the fields we manage; lastReviewed is derived, so ignore it. */
 function hasChanges(currentFields, nextFields, locale) {
   return Object.keys(nextFields).some(key => {
     if (key === DERIVED) return false;
     return (
-      JSON.stringify(currentFields[key]?.[locale]) !==
-      JSON.stringify(nextFields[key][locale])
+      JSON.stringify(forCompare(currentFields[key]?.[locale])) !==
+      JSON.stringify(forCompare(nextFields[key][locale]))
     );
   });
 }
@@ -709,7 +870,40 @@ function formatField(key, value, lookups) {
     );
     return `[${names.join(', ')}]`;
   }
+  if (ARTICLE_LINK_FIELDS.includes(key)) {
+    // An id Contentful holds for an article that is not in the tree stays an
+    // id. That is the honest rendering - there is no slug to show.
+    const slugs = value.map(
+      link => lookups.articleSlugById[link.sys.id] ?? link.sys.id,
+    );
+    return `[${slugs.join(', ')}]`;
+  }
   return truncate(value);
+}
+
+/** Link fields resolve to names; text fields get cut where they differ. */
+const isLinkField = key =>
+  key === 'category' || key === 'tag' || ARTICLE_LINK_FIELDS.includes(key);
+
+/**
+ * The two sides of one changed field.
+ *
+ * `truncate` collapses whitespace and always cuts at the front, so two long
+ * values that differ only near the end render as the same string. Where both
+ * sides are text, window them around the first character that differs instead.
+ */
+function diffPair(key, before, after, lookups) {
+  if (isLinkField(key) || typeof before !== 'string' || typeof after !== 'string') {
+    return [
+      before === undefined ? null : `- ${formatField(key, before, lookups)}`,
+      after === undefined
+        ? '+ (removed)'
+        : `+ ${formatField(key, after, lookups)}`,
+    ];
+  }
+
+  const [a, b] = contrast(before, after);
+  return [`- ${a}`, `+ ${b}`];
 }
 
 const label = (kind, key) => `  ${kind.padEnd(9)}  ${key}`;
@@ -781,8 +975,11 @@ async function reportGotchas(client, locale, gotchas, ctx) {
     let changed = 0;
 
     for (const key of GOTCHA_FIELDS) {
-      const before = current.fields[key]?.[locale];
-      const after = next[key]?.[locale];
+      // The label follows the meaning; the detail lines follow what is sent.
+      const rawBefore = current.fields[key]?.[locale];
+      const rawAfter = next[key]?.[locale];
+      const before = forCompare(rawBefore);
+      const after = forCompare(rawAfter);
 
       if (JSON.stringify(before) === JSON.stringify(after)) {
         if (before !== undefined) unchanged.push(key);
@@ -791,16 +988,10 @@ async function reportGotchas(client, locale, gotchas, ctx) {
 
       changed += 1;
       console.log(gotchaLabel(before === undefined ? 'new' : 'changed', key));
-      if (before !== undefined) {
-        console.log(gotchaDetail(`- ${formatField(key, before, ctx.lookups)}`));
+
+      for (const line of diffPair(key, rawBefore, rawAfter, ctx.lookups)) {
+        if (line !== null) console.log(gotchaDetail(line));
       }
-      console.log(
-        gotchaDetail(
-          after === undefined
-            ? '+ (removed)'
-            : `+ ${formatField(key, after, ctx.lookups)}`,
-        ),
-      );
     }
 
     if (changed === 0) console.log('      unchanged');
@@ -835,8 +1026,11 @@ function reportUpdate(current, fields, locale, lookups, fullDiff) {
   for (const key of Object.keys(fields)) {
     if (key === DERIVED || CHILD_FIELDS.includes(key)) continue;
 
-    const before = current.fields[key]?.[locale];
-    const after = fields[key][locale];
+    // The label follows the meaning; the detail lines follow what is sent.
+    const rawBefore = current.fields[key]?.[locale];
+    const rawAfter = fields[key][locale];
+    const before = forCompare(rawBefore);
+    const after = forCompare(rawAfter);
 
     if (JSON.stringify(before) === JSON.stringify(after)) {
       unchanged.push(key);
@@ -844,22 +1038,18 @@ function reportUpdate(current, fields, locale, lookups, fullDiff) {
     }
 
     if (key === 'body') {
-      changes.push(['changed', key, bodyDetails(before ?? '', after, fullDiff)]);
-      continue;
-    }
-
-    if (before === undefined) {
-      changes.push(['new', key, [`+ ${formatField(key, after, lookups)}`]]);
+      changes.push([
+        'changed',
+        key,
+        bodyDetails(rawBefore ?? '', rawAfter, fullDiff),
+      ]);
       continue;
     }
 
     changes.push([
-      'changed',
+      before === undefined ? 'new' : 'changed',
       key,
-      [
-        `- ${formatField(key, before, lookups)}`,
-        `+ ${formatField(key, after, lookups)}`,
-      ],
+      diffPair(key, rawBefore, rawAfter, lookups).filter(line => line !== null),
     ]);
   }
 
@@ -921,8 +1111,15 @@ async function main() {
 
   const categories = await readJson('content/_reference/categories.json');
   const tags = await readJson('content/_reference/tags.json');
+  const contentModel = await readJson('content/_reference/content-model.json');
 
-  const errors = validate(fm, content, categories, tags);
+  warnUnknownKeys(filePath, fm, contentModel);
+
+  // Filesystem only, and validate() needs it, so it runs before the client
+  // exists. One pass feeds both the link resolution and the gotcha check.
+  const index = await readArticleIndex(filePath);
+
+  const errors = validate(fm, content, categories, tags, index);
   if (errors.length > 0) {
     throw new Error(`${filePath}\n  - ${errors.join('\n  - ')}`);
   }
@@ -941,7 +1138,7 @@ async function main() {
   // Gotchas are shared, so a write here reaches every article that links one.
   // Refuse before anything is written when the copies disagree; the map it
   // returns is the blast radius, which the dry-run report shows either way.
-  const alsoLinkedBy = await collectSharedGotchas(filePath, gotchas);
+  const alsoLinkedBy = collectSharedGotchas(filePath, gotchas, index.gotchaById);
 
   // Children first: the article needs their ids to build its links.
   const questionLinks = dryRun
@@ -963,6 +1160,10 @@ async function main() {
     interviewQuestions: { [locale]: questionLinks },
     // Markdown order is the display order; send it through unchanged.
     gotchas: { [locale]: gotchaLinks },
+    // Always sent, empty included: the frontmatter is the source of truth, so
+    // a slug removed from it has to be removed in Contentful too.
+    prerequisites: { [locale]: linkArticles(fm.prerequisites, index.bySlug) },
+    related: { [locale]: linkArticles(fm.related, index.bySlug) },
     lastReviewed: { [locale]: today() },
   };
 
@@ -972,10 +1173,19 @@ async function main() {
     fields.versionScope = { [locale]: fm.versionScope };
   }
 
+  if (fm.readingTime != null) {
+    fields.readingTime = { [locale]: fm.readingTime };
+  }
+
   if (dryRun) {
     const lookups = {
       categoryNameById: invert(categories),
       tagNameById: invert(tags),
+      articleSlugById: Object.fromEntries(
+        [...index.bySlug].flatMap(([slug, { entryId }]) =>
+          entryId ? [[entryId, slug]] : [],
+        ),
+      ),
     };
     const gotchaCtx = { alsoLinkedBy, lookups, categories, tags, filePath };
 

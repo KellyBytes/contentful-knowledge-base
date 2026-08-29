@@ -16,7 +16,6 @@ contentfulEntryId: 2x3LhP75tGICTQJFKLkJmf
 order: 60
 versionScope: >-
   Promise.allSettled: ES2020 (Node 12.9+); Promise.any: ES2021 (Node 15+, the same release that made unhandled rejections fatal in Node). AbortController is broadly supported in current runtimes.
-lastUpdated: 2026-08-26
 readingTime: 13
 prerequisites:
   - the-event-loop-and-microtasks

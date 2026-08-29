@@ -19,7 +19,6 @@ versionScope: >-
   ES5 (2009) for map/filter/reduce and the other non-mutating basics; ES2023
   for toSorted/toReversed/toSpliced/with, which need Node.js 20+ or a browser
   from mid-2023 onward
-lastUpdated: 2026-08-25
 readingTime: 11
 prerequisites:
   - primitive-vs-reference-types

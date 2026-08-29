@@ -17,7 +17,6 @@ order: 20
 versionScope: >-
   ES2015 (ES6) and later; structuredClone requires Node.js 17+ (backported to
   16.17+) or a modern browser
-lastUpdated: 2026-08-24
 readingTime: 9
 prerequisites:
   - array-methods-and-immutable-updates

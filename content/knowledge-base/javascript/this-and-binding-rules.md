@@ -15,7 +15,6 @@ contentfulEntryId: 3hVNkdnTSIZt7tThVEZJoQ
 order: 70
 versionScope: >-
   Arrow functions and lexical this are ES2015. Public class field syntax was standardized in ES2022, though React tooling (Babel) has supported it since long before that.
-lastUpdated: 2026-08-26
 readingTime: 11
 prerequisites:
   - var-let-const

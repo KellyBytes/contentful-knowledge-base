@@ -90,8 +90,8 @@ npm run article:push -- <path>             sync child entries, then create or
                                            update the article draft
 
    ─── HUMAN GATE ────────────────────────────────────────────────
-   Set `prerequisites` and `related` in the web app, preview the
-   draft, then publish the article. Nothing here publishes it.
+   Preview the draft in the Contentful web app, then publish it.
+   Nothing here publishes an article.
    ───────────────────────────────────────────────────────────────
 
 /commit                            stage content/ and commit
@@ -101,7 +101,7 @@ A push that creates a child entry writes the new id back into the Markdown, so t
 
 `--dry-run` is the review step before a write, not a formality: run it and read the report before pushing an article that already exists.
 
-Markdown under `content/` is the source of truth for everything the pipeline manages. `prerequisites` and `related` are the exception — those are set in the web app and exist only in Contentful.
+Markdown under `content/` is the source of truth for everything the pipeline manages.
 
 ---
 
@@ -194,7 +194,7 @@ export const getThing = unstable_cache(fetchThing, ['kb-thing'], {
 
 - **Articles are resolved by `contentfulEntryId` in the frontmatter, never by slug.** No id means create, and the script writes the new id back into the file. Do not add a slug lookup as a fallback — a near match would overwrite an unrelated article.
 - **Child entries are resolved by `sys.id` only.** Never resolve a child entry by slug at push time.
-- **Merge, never replace.** On update, send `{ ...current.fields, ...fields }`. `prerequisites` and `related` are set in the web app and exist only in Contentful; a wholesale replace wipes them.
+- **Merge, never replace.** On update, send `{ ...current.fields, ...fields }`. Every field the pipeline manages now comes from the frontmatter, but the merge still matters: it is what keeps a field added to the content type later from being wiped before the script knows about it.
 
 ### Child entries
 

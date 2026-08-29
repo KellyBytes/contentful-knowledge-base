@@ -16,7 +16,6 @@ contentfulEntryId: 4UBVUBwsXMUrIn86oZVhLU
 order: 50
 versionScope: >-
   Promises: ES2015; async/await: ES2017; queueMicrotask(): Node.js 11+ (2018), browsers same era. Node's phased event loop differs from the browser model described here.
-lastUpdated: 2026-08-25
 readingTime: 12
 prerequisites:
   - closures-explained
