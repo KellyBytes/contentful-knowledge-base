@@ -1215,12 +1215,15 @@ async function main() {
       throw err;
     }
 
-    console.log(`[dry-run] UPDATE ${fm.slug} (${entryId})\n`);
-
     // The same call the real push makes, so the two can never disagree.
-    if (!hasChanges(current.fields, fields, locale)) {
-      console.log('  no changes (lastReviewed left untouched)');
-    }
+    const willChange = hasChanges(current.fields, fields, locale);
+
+    // Headed after the diff is evaluated, never before. An entry id says only
+    // that the article exists; a header built from that alone reads as a write
+    // about to happen even when nothing would be sent.
+    console.log(
+      `[dry-run] ${willChange ? 'UPDATE' : 'NO CHANGES'} ${fm.slug} (${entryId})\n`,
+    );
 
     reportUpdate(current, fields, locale, lookups, fullDiff);
     reportUntouched(current, fields, locale);
