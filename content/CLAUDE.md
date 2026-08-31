@@ -104,13 +104,44 @@ pick a value that puts the new article where it belongs.
 `state-management` · `rendering` · `performance` · `caching` · `security` ·
 `error-handling` · `data-modeling` · `interview-frequent`
 
-Tags are concept axes and are deliberately orthogonal to category — the same tag
-appears across several categories. Pick the 2–3 that a reader would actually
-browse by, not every one that technically applies.
+`_reference/tags.json` is the authoritative list — it is generated from
+Contentful. The names above are repeated here for reading, not as a second
+source of truth.
 
-`interview-frequent` is reserved for topics asked in a large share of front-end
-interviews. It costs one of four tag slots, so it is not a default. 🔧 do you
-want a firmer rule here?
+Tags are concept axes and are deliberately orthogonal to category — the same tag
+appears across several categories. Pick the ones a reader would actually browse
+by, not every one that technically applies. Most articles carry two or three;
+four is the ceiling, not a target.
+
+A gotcha carries at most **three** tags, and they describe that gotcha's own
+problem rather than being inherited from the article. `interview-frequent` does
+not belong on a gotcha — the claim is about a topic, not about a symptom.
+
+### The `interview-frequent` tag
+
+This one costs a slot, so it needs a firmer test than the others. The test is
+not "does this come up in interviews" — almost everything does. It is:
+
+> **If a reader skipped this article, would a question they cannot answer be
+> likely to come up?**
+
+Not whether the topic is interesting, and not whether it matters day to day. A
+topic can be worth writing and still not earn the tag. Floating-point precision
+is worth an article; a candidate who has not read it is unlikely to lose an
+interview over it.
+
+The judgement is scoped to the kind of role that would touch this topic — a
+CSS question does not come up in a back-end screen, and an index-design
+question does not come up in a front-end one. Ask whether a candidate for the
+roles this article serves would be likely to face it, not whether every
+interview everywhere asks it.
+
+It is about those interviews in general, never about one interview someone
+happened to sit. A question asked once is not evidence of frequency.
+
+Every article in the knowledge base currently carries this tag. That is expected
+while the categories only hold their foundational topics — the tag starts
+distinguishing anything once articles exist that do not earn it.
 
 If a topic genuinely has no fitting category or tag, stop and say so. Do not
 approximate, and do not add an entry to the reference JSON files — those are
