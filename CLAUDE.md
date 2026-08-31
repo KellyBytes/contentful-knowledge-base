@@ -1,6 +1,8 @@
 # Kelly's Notes
 
-Content platform for kellybytes.dev — a blog (`/posts`) and a knowledge base (`/kb`) of JavaScript / React / web-fundamentals articles aimed at technical interview prep. Next.js App Router + Contentful, deployed on Vercel.
+Content platform for kellybytes.dev — a blog (`/posts`) and a knowledge base (`/kb`) of web development articles — JavaScript, TypeScript,
+React, Next.js, CSS, Node.js, databases, and web fundamentals — aimed at
+technical interview prep. Next.js App Router + Contentful, deployed on Vercel.
 
 Articles are authored as Markdown under `content/` and pushed to Contentful by scripts in `scripts/`. Contentful is a delivery target, not the source of truth. See `content/CLAUDE.md` for authoring rules and the article schema.
 
@@ -172,7 +174,7 @@ export const getThing = unstable_cache(fetchThing, ['kb-thing'], {
 
 - Allowed: h2–h4, lists, tables, fenced code blocks, inline code, links, blockquotes
 - **Raw HTML is enabled** — `rehype-raw` runs with no sanitizer and no element filter. The sanctioned set is `<details>` and `<summary>`, used for the answers block at the end of every article. Any other tag needs a reason
-- Also renders, but no article uses one: GFM footnotes, task lists, images. Introducing one is a decision, not a default
+- Also renders, but no article uses one: GFM footnotes, task lists. Introducing one is a decision, not a default
 - Not available: math — `remark-math` is not installed, so `$x$` stays literal text
 - Images render as a bare `<img>` with no optimisation and no Contentful asset
   behind them. KB bodies do not use images — the diagrams are `text` blocks
