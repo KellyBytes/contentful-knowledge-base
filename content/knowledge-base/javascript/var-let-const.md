@@ -13,7 +13,7 @@ summary: >-
   function-scoped and fails silently. Covers scope, hoisting, the temporal dead
   zone, and why const does not mean immutable.
 contentfulEntryId: 64pOmxhp91mlZpZgNLaDCH
-order: 10
+order: 100
 versionScope: ES2015 (ES6) and later
 readingTime: 9
 prerequisites: []

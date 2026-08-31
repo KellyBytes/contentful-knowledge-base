@@ -13,7 +13,7 @@ summary: >-
   created in, even after that scope has finished running. It is what makes
   private state, factory functions, and most callback patterns possible.
 contentfulEntryId: xu0KrzEfJQF2mtgpf3wYd
-order: 40
+order: 400
 versionScope: ES2015 (ES6) and later; React examples target React 18+
 readingTime: 12
 prerequisites:

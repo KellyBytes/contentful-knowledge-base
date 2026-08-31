@@ -13,7 +13,7 @@ summary: >-
   one. That single difference explains how copying, comparing, and passing them
   into functions behave.
 contentfulEntryId: D9w0y4iWJrIKtynKlVWw8
-order: 20
+order: 200
 versionScope: >-
   ES2015 (ES6) and later; structuredClone requires Node.js 17+ (backported to
   16.17+) or a modern browser

@@ -13,7 +13,7 @@ summary: >-
   is a flatter syntax for the same machinery. Covers the three states, chaining,
   error handling, and running work in parallel instead of one at a time.
 contentfulEntryId: 2x3LhP75tGICTQJFKLkJmf
-order: 60
+order: 600
 versionScope: >-
   Promise.allSettled: ES2020 (Node 12.9+); Promise.any: ES2021 (Node 15+, the same release that made unhandled rejections fatal in Node). AbortController is broadly supported in current runtimes.
 readingTime: 13

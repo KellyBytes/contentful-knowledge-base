@@ -12,7 +12,7 @@ summary: >-
   The function an effect returns runs before every re-run and once more on
   unmount. Skipping it is how timers stack up, listeners pile on, and a slow
   response overwrites a newer one.
-order: 10
+order: 600
 versionScope: >-
   React 18+ — StrictMode double-invokes effects in development from React 18
   onward; the cleanup contract itself is unchanged in React 19
@@ -308,13 +308,13 @@ Note the `catch`. Aborting rejects the promise with a `DOMException` named `Abor
 
 ## Side-by-side
 
-|                             | `ignore` flag  | `AbortController`               |
-| --------------------------- | -------------- | ------------------------------- |
-| Discards the stale result   | yes            | yes                             |
-| Stops the request in flight | no             | yes                             |
-| Works with any async API    | yes            | only if it accepts a `signal`   |
-| Error handling              | nothing extra  | must filter `AbortError`        |
-| Cost                        | two lines      | three lines and a `catch`       |
+|                             | `ignore` flag | `AbortController`             |
+| --------------------------- | ------------- | ----------------------------- |
+| Discards the stale result   | yes           | yes                           |
+| Stops the request in flight | no            | yes                           |
+| Works with any async API    | yes           | only if it accepts a `signal` |
+| Error handling              | nothing extra | must filter `AbortError`      |
+| Cost                        | two lines     | three lines and a `catch`     |
 
 Reach for `ignore` by default — it is shorter, and it cannot mislead you with an error that is not one. Reach for `AbortController` when the request is expensive enough that not sending it matters, or when you fire them fast enough to saturate the browser's connection limit.
 

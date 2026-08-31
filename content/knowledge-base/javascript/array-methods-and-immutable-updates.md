@@ -14,7 +14,7 @@ summary: >-
   update. Covers which is which, the four update patterns, and the shallow copy
   trap.
 contentfulEntryId: 5l0Rl3y9jlgZXHrLDokCcq
-order: 30
+order: 300
 versionScope: >-
   ES5 (2009) for map/filter/reduce and the other non-mutating basics; ES2023
   for toSorted/toReversed/toSpliced/with, which need Node.js 20+ or a browser

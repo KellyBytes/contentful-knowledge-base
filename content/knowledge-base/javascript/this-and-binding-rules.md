@@ -12,7 +12,7 @@ summary: >-
   was written. Covers the four binding rules and their priority, why extracting
   a method loses its this, and how arrow functions opt out entirely.
 contentfulEntryId: 3hVNkdnTSIZt7tThVEZJoQ
-order: 70
+order: 700
 versionScope: >-
   Arrow functions and lexical this are ES2015. Public class field syntax was standardized in ES2022, though React tooling (Babel) has supported it since long before that.
 readingTime: 11
