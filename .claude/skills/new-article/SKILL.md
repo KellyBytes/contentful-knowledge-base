@@ -10,14 +10,15 @@ Draft an article for category `$category` with slug `$slug`.
 
 ## What to read first
 
-| File                                                      | For                                                                               |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `content/_reference/article-template.md`                  | The shape of the front matter. Copy it and fill it in.                            |
-| `content/CLAUDE.md`                                       | How the body is written — opening, length, difficulty, YAML scalar style.         |
-| `content/knowledge-base/javascript/closures-explained.md` | The reference implementation. Match its voice and structure. **Read it in full.** |
-| `content/_reference/categories.json`                      | The authoritative category names.                                                 |
-| `content/_reference/tags.json`                            | The authoritative tag names.                                                      |
-| `content/_reference/topic-ownership.md`                   | What the existing articles already cover.                                         |
+| File                                                      | For                                                                                                                                                                                                                   |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content/_reference/article-template.md`                  | The shape of the front matter. Copy it and fill it in.                                                                                                                                                                |
+| `content/CLAUDE.md`                                       | How the body is written — opening, length, difficulty, tag selection, YAML scalar style.                                                                                                                              |
+| `content/knowledge-base/javascript/closures-explained.md` | The reference implementation. Match its voice and structure. **Read it in full.**                                                                                                                                     |
+| `content/_reference/categories.json`                      | The authoritative category names.                                                                                                                                                                                     |
+| `content/_reference/tags.json`                            | The authoritative tag names.                                                                                                                                                                                          |
+| `content/_reference/topic-ownership.md`                   | What the existing articles already cover.                                                                                                                                                                             |
+| `content/_ideas/*.md`                                     | If a proposal for this slug exists, it already decided `difficulty`, `prerequisites`, `related` and `order`. Follow it. If you would decide differently, say so and why before writing — do not silently override it. |
 
 If any two of these contradict each other, stop and report it. Do not pick one and write the article anyway.
 
@@ -70,6 +71,7 @@ Print this checklist with the measured value filled in on every line. A bare "OK
 - [ ] `readingTime`: \_\_\_\_ minutes
 - [ ] No `contentfulEntryId` written
 - [ ] `order`: \_\_\_\_ — how it sits among its siblings in the same category
+- [ ] `interview-frequent`: applied / not applied — one line on why
 
 **Gotchas** — \_\_\_\_ entries (max 6)
 
