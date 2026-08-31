@@ -9,6 +9,7 @@ existing article already covers.
 | `var` loop trap / captured bindings | `javascript/closures-explained` | `javascript/var-let-const` |
 | Temporal dead zone                  | `javascript/var-let-const`      | —                          |
 | `const` is not immutability         | `javascript/var-let-const`      | —                          |
+| Stale closure in an effect          | `javascript/closures-explained` | `react/useeffect-cleanup`  |
 
 Rules for using this file:
 

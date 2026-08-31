@@ -41,6 +41,7 @@ gotchas:
     tag:
       - rendering
       - performance
+    id: 1q4dlCBXenmjmtINAq6ibK
   - symptom: >-
       My effect runs twice on mount in development, so every fetch and every log
       fires two times.
@@ -57,6 +58,7 @@ gotchas:
     category: React
     tag:
       - rendering
+    id: 2fLtUHB9bC5NItnocP21tU
   - symptom: >-
       I type quickly in a search box and the results that land are for an older
       query, not the one on screen.
@@ -77,6 +79,7 @@ gotchas:
     tag:
       - async
       - rendering
+    id: 4vkoszDMI8BmK76JnlE7qO
   - symptom: >-
       React warns that my effect returned the wrong thing, and my cleanup never
       runs.
@@ -85,8 +88,8 @@ gotchas:
       useEffect must not return anything besides a function, which is used for
       clean-up.
     cause: >-
-      An `async` function always returns a promise, so `useEffect(async () => {})`
-      hands React a promise where it expects a cleanup function. React has
+      An `async` function always returns a promise, so `useEffect(async () =>
+      {})` hands React a promise where it expects a cleanup function. React has
       nothing to call before the next run or on unmount.
     fix: |-
       Keep the effect itself synchronous and move the async work inside it:
@@ -99,6 +102,7 @@ gotchas:
     tag:
       - async
       - error-handling
+    id: 75CtmHqIG9StYWySt6nkmZ
   - id: 5SJqngLeg08xNuB7a7J7Ts
     symptom: >-
       My page's memory keeps climbing, and data I created inside a function is
@@ -125,6 +129,7 @@ interviewQuestions:
       to stop it, because the effect will run again. Emphasize the pairing: if
       you can name what the effect left behind, you can name what the cleanup
       has to remove.
+    id: 5N0JVMGQQuLmjN1tvXkdWd
   - question: When exactly does the cleanup run?
     shortAnswer: >-
       Twice as often as people expect. Before every re-run of the effect, and
@@ -134,6 +139,7 @@ interviewQuestions:
       backwards leads to code that assumes cleanup only fires at the end of the
       component's life — which is the assumption that lets timers and listeners
       stack up on every dependency change.
+    id: 3TBIQB2LZrWr7G578HfqLZ
   - question: StrictMode makes my effect run twice in development. Is that a bug?
     shortAnswer: >-
       Not a bug in React — it is a test React is running on your effect. In
@@ -143,6 +149,7 @@ interviewQuestions:
       dependency changed. The fix is to make the effect idempotent, never to
       remove StrictMode. Say that out loud — reaching for a ref to skip the
       second run is the answer interviewers are listening for.
+    id: 7K3EobDUxELn7DQXSFD7sW
   - question: How do you decide whether an effect needs cleanup?
     shortAnswer: >-
       Ask what the effect left behind that outlives it. If it started a timer,
@@ -152,6 +159,8 @@ interviewQuestions:
       wrote to a ref, there is nothing to return. Frame it as a symmetry check
       rather than a list to memorize — every API that hands you a handle is
       telling you it expects the handle back.
+    id: 7o7bfMzLW2o2oliJuYjqCA
+contentfulEntryId: 4fUHBwEg2VF56n7O3Vurag
 ---
 
 Run this and predict how fast the counter climbs after `speed` has changed three times.
