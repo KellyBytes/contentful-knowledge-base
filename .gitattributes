@@ -1,0 +1,4 @@
+# Article Markdown is the source of truth for the `article` content type and is
+# read line by line by scripts/article-push.mjs. Pin it to LF so a stray CRLF
+# checkout cannot show up as a whole-file diff.
+*.md text eol=lf
