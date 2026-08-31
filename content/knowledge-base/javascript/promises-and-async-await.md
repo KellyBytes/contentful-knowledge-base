@@ -186,7 +186,7 @@ You order something online. You don't get the package — you get a
 - You can register instructions in advance: _when it arrives, leave it with
   the neighbour._ That's `.then()`.
 
-```
+```text
                     ┌──────────────► fulfilled (value)
                     │                    │
    pending ─────────┤                    ├──► settled: never changes again

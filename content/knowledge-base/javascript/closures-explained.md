@@ -176,7 +176,7 @@ Keep that in mind when you get to the memory section. "The bag is heavy" is the 
 
 ## What actually happens
 
-```
+```text
    makeCounter() runs and returns
   ┌─────────────────────────┐
   │  makeCounter scope      │  ← gone from the call stack

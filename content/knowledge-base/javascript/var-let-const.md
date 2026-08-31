@@ -185,7 +185,7 @@ All three declarations are **hoisted** — the engine registers the name at the 
 
 That locked window is the **Temporal Dead Zone (TDZ)**.
 
-```
+```text
         scope starts            declaration line          scope ends
              │                        │                        │
 var  y:      │◄──── undefined ───────►│◄──────── 5 ───────────►│

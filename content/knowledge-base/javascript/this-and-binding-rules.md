@@ -173,7 +173,7 @@ again. That permanence is the entire point of `bind`, covered below.
 
 Work down the ladder and stop at the first match.
 
-```
+```text
 1. Called with `new`?              → this = the brand-new object
 2. Called with .call/.apply/.bind? → this = what you passed
 3. Something left of the dot?      → this = that object

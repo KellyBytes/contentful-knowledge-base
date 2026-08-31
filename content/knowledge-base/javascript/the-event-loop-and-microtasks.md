@@ -149,7 +149,7 @@ freeze a page forever, which the starvation trap below covers directly.
 
 ## The moving parts
 
-```
+```text
      ┌──────────────┐
      │  Call stack  │  ← one chef, one dish at a time
      └──────▲───────┘
@@ -251,7 +251,7 @@ that runs on promises needs a task boundary somewhere.
 In a browser, painting happens **between tasks**, never in the middle of
 one, and never during a microtask drain.
 
-```
+```text
 ┌─ task ─┐ ┌ microtasks ┐ ┌─ render ─┐ ┌─ task ─┐ ┌ microtasks ┐ ...
 ```
 

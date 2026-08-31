@@ -168,12 +168,16 @@ export const getThing = unstable_cache(fetchThing, ['kb-thing'], {
 
 ## Markdown rendering (KB bodies)
 
-`components/Markdown.jsx` — `react-markdown` + `remark-gfm` + `rehype-highlight`, no custom `components` override. Styling comes from `@tailwindcss/typography`.
+`components/Markdown.jsx` — `react-markdown` + `remark-gfm` + `rehype-raw` + `rehype-highlight`, no custom `components` override. Styling comes from `@tailwindcss/typography`.
 
 - Allowed: h2–h4, lists, tables, fenced code blocks, inline code, links, blockquotes
-- Not available: raw HTML (not enabled), footnotes, math, images
+- **Raw HTML is enabled** — `rehype-raw` runs with no sanitizer and no element filter. The sanctioned set is `<details>` and `<summary>`, used for the answers block at the end of every article. Any other tag needs a reason
+- Also renders, but no article uses one: GFM footnotes, task lists, images. Introducing one is a decision, not a default
+- Not available: math — `remark-math` is not installed, so `$x$` stays literal text
+- Images render as a bare `<img>` with no optimisation and no Contentful asset
+  behind them. KB bodies do not use images — the diagrams are `text` blocks
 - `h1` is reserved for the `title` field — never use `#` in a body
-- **Every fenced code block must declare a language.** `rehype-highlight` leaves untagged blocks unhighlighted.
+- **Every fenced block must declare a language — no exception.** Non-code blocks (ASCII diagrams, decision lists, terminal transcripts) use `text`, which emits no highlighting markup but keeps the padding and horizontal scrolling every other block has.
 
 ---
 

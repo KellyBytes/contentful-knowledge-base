@@ -40,6 +40,11 @@ from the existing directories.
 
 ## Frontmatter
 
+> The authoritative shape of the front matter is
+> `_reference/article-template.md`. What follows is background — the reasoning
+> behind the fields and how to choose their values. When drafting, copy the
+> template; read this for the why.
+
 ```yaml
 ---
 contentType: article
@@ -79,7 +84,7 @@ all — a copied id makes the push overwrite whatever entry it belongs to.
 | `summary`                 | **≤256 chars — this is a Symbol, not a Text field.** 1–2 sentences, plain prose, no markdown |
 | `order`                   | Integer. Position within the category                                                        |
 | `contentfulEntryId`       | Written by the push script. **Never write or edit this by hand**                             |
-| `interviewQuestions[].id` | Same. A new question has **no `id` key at all** — omit the line                        |
+| `interviewQuestions[].id` | Same. A new question has **no `id` key at all** — omit the line                              |
 
 `lastReviewed` is derived by the push script and must not appear in frontmatter.
 
@@ -147,6 +152,7 @@ Every article follows the same arc. Section names vary; the sequence does not.
    When the topic is routinely confused with a neighbour, that separation is
    its own section straight after the opening, not part of it
    (`## Scope and closure are not the same thing`).
+
 2. **`## The <object> analogy`** — one concrete, physical, non-technical
    metaphor, followed by one or two refinements that keep it honest ("the
    backpack holds the actual variables, not photocopies").
@@ -249,13 +255,24 @@ Links are root-relative: `/kb/<category-slug>/<article-slug>`.
 
 ## Markdown
 
-Rendered by `react-markdown` + `remark-gfm` + `rehype-highlight`
+Rendered by `react-markdown` + `remark-gfm` + `rehype-raw` + `rehype-highlight`
 (`components/Markdown.jsx`), styled with `@tailwindcss/typography`. No custom
 component overrides — what the plugins support is what you get.
 
 - Allowed: `h2`–`h4`, lists, tables, fenced code, inline code, links,
   blockquotes
-- Not available: raw HTML, footnotes, math, images
+- **Raw HTML is enabled, but only `<details>` and `<summary>` are sanctioned** —
+  the "Answers" block every article closes with. Reaching for any other tag
+  needs a reason; if Markdown can express it, write Markdown
+- **Leave a blank line after `<summary>` and before `</details>`.** Without them
+  the inner Markdown is swallowed — the answers render as nothing, with no error
+  anywhere
+- Also renders but unused: GFM footnotes, task lists, images. Introducing one is
+  a decision, not a default
+- Not available: math — `remark-math` is not installed, so `$x$` renders as
+  literal text
+- Images render as a bare `<img>` with no optimisation and no Contentful asset
+  behind them. KB bodies do not use images — the diagrams are `text` blocks
 - **Never use `h1`.** The `title` field renders as the page's `h1`
 - Tables: GFM pipe syntax only
 
@@ -264,11 +281,14 @@ component overrides — what the plugins support is what you get.
 **Real code must declare a language** — ` ```js `, ` ```jsx `, ` ```bash `.
 `rehype-highlight` leaves untagged blocks unhighlighted.
 
-**ASCII diagrams must be left untagged.** That is deliberate: an untagged block
-renders as plain monospace, which is exactly right for box-drawing characters.
-Tagging a diagram makes the highlighter colour it as if it were code.
+**Every fenced block declares a language. There is no exception.** Anything that
+is not code — an ASCII diagram, a decision list, a terminal transcript — uses
+`text`. There is nothing to weigh up: `text` maps to highlight.js `plaintext`,
+which emits no highlighting markup at all, so a diagram's characters are
+untouched. What it does add is the padding and horizontal scrolling every code
+block already has, which is why a wide diagram scrolls instead of overflowing.
 
-```
+```text
         scope starts            declaration line          scope ends
              │                        │                        │
 var  y:      │◄──── undefined ───────►│◄──────── 5 ───────────►│

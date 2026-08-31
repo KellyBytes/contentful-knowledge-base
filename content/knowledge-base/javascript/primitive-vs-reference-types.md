@@ -193,7 +193,7 @@ type.
 A simplified picture — variable names live on one board, objects live in
 separate storage.
 
-```
+```text
    Variables (the label board)        Object storage
   ┌──────────┬────────────┐          ┌────────────────────────┐
   │ age      │ 30         │          │ #a1  { name: "Kelly",  │

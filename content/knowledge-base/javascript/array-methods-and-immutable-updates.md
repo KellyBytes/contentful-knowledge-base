@@ -171,7 +171,7 @@ level deep. Anything nested inside, like an object sitting at index 0, is
 still the exact same object in both the old array and the new one. That gap
 is exactly what the shallow copy trap below is about.
 
-```
+```text
 push:                          [...arr, item]:
 
   ┌─────────┐                    ┌─────────┐      ┌─────────┐
