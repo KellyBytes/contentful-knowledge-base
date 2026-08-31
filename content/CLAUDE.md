@@ -60,7 +60,7 @@ summary: >-
   A closure is a function that keeps access to the variables of the scope it was
   created in, even after that scope has finished running.
 # contentfulEntryId: written back by the push script. Never write it by hand.
-order: 40
+order: 400
 interviewQuestions:
   - question: What is a closure?
     shortAnswer: >-
@@ -88,7 +88,7 @@ all — a copied id makes the push overwrite whatever entry it belongs to.
 
 `lastReviewed` is derived by the push script and must not appear in frontmatter.
 
-**`order` uses increments of 10**, so an article can be inserted between two
+**`order` uses increments of 100**, so an article can be inserted between two
 existing ones without renumbering. Sequence is pedagogical — the order someone
 should read them — not alphabetical. Read the sibling files in the category and
 pick a value that puts the new article where it belongs.
