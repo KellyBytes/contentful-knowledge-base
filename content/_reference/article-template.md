@@ -93,11 +93,10 @@ gotchas: # max 6
 prerequisites: # max 3, article slugs
   - var-let-const
 related: [] # max 4, article slugs
-order: 40 # optional, integer, increments of ten
+order: 400 # optional, integer, increments of ten
 versionScope: ES2015 (ES6) and later # optional, max 256
 readingTime: 12 # optional, integer, minutes
 ---
-
 The body starts here.
 ```
 
@@ -110,27 +109,27 @@ and should be left alone.
 
 ## 3. Article fields
 
-| Field                | Required | Type              | Limit          | Notes                                                                     |
-| -------------------- | -------- | ----------------- | -------------- | ------------------------------------------------------------------------- |
-| `contentType`        | ✔        | —                 |                | Always `article`. Bookkeeping, not a content type field                   |
-| `contentfulEntryId`  |          | —                 |                | **Written back by the push script. Never write or edit it by hand**       |
-| `title`              | ✔        | Symbol            | max 256        | Noun phrase, not a question. Quote titles containing code                 |
-| `slug`               | ✔        | Symbol, unique    |                | Lowercase kebab-case only — Contentful rejects anything else              |
-| `summary`            | ✔        | Symbol            | max 256        | **A Symbol, not a Text field.** 1–2 sentences, plain prose, no Markdown   |
-| `difficulty`         | ✔        | Symbol            |                | `Beginner` / `Intermediate` / `Advanced`                                  |
-| `body`               | ✔        | Text              |                | The Markdown below the closing `---`. Not a front matter key              |
-| `category`           | ✔        | Link → category   | exactly 1      | One of the eight names in `categories.json`. Never invent one             |
-| `tag`                | ✔        | Array&lt;Link&gt; | 1–4            | **Field ID is singular.** Not `tags`. Names from `tags.json`              |
-| `interviewQuestions` |          | Array&lt;Link&gt; | max 5          | See §5. A new question carries no `id`                                    |
-| `gotchas`            |          | Array&lt;Link&gt; | max 6          | See §4. A new gotcha carries no `id`                                      |
-| `prerequisites`      |          | Array&lt;Link&gt; | max 3          | Article **slugs**, not ids. See §6                                        |
-| `related`            |          | Array&lt;Link&gt; | max 4          | Article **slugs**, not ids. See §6                                        |
-| `lastReviewed`       | ✔        | Date              |                | **Derived on every push. Never write it in front matter**                 |
-| `order`              |          | Integer           |                | Position within the category                                              |
-| `versionScope`       |          | Symbol            | max 256        | e.g. `ES2015 (ES6) and later; React examples target React 18+`            |
-| `readingTime`        |          | Integer           |                | Minutes                                                                   |
+| Field                | Required | Type              | Limit     | Notes                                                                   |
+| -------------------- | -------- | ----------------- | --------- | ----------------------------------------------------------------------- |
+| `contentType`        | ✔        | —                 |           | Always `article`. Bookkeeping, not a content type field                 |
+| `contentfulEntryId`  |          | —                 |           | **Written back by the push script. Never write or edit it by hand**     |
+| `title`              | ✔        | Symbol            | max 256   | Noun phrase, not a question. Quote titles containing code               |
+| `slug`               | ✔        | Symbol, unique    |           | Lowercase kebab-case only — Contentful rejects anything else            |
+| `summary`            | ✔        | Symbol            | max 256   | **A Symbol, not a Text field.** 1–2 sentences, plain prose, no Markdown |
+| `difficulty`         | ✔        | Symbol            |           | `Beginner` / `Intermediate` / `Advanced`                                |
+| `body`               | ✔        | Text              |           | The Markdown below the closing `---`. Not a front matter key            |
+| `category`           | ✔        | Link → category   | exactly 1 | One of the eight names in `categories.json`. Never invent one           |
+| `tag`                | ✔        | Array&lt;Link&gt; | 1–4       | **Field ID is singular.** Not `tags`. Names from `tags.json`            |
+| `interviewQuestions` |          | Array&lt;Link&gt; | max 5     | See §5. A new question carries no `id`                                  |
+| `gotchas`            |          | Array&lt;Link&gt; | max 6     | See §4. A new gotcha carries no `id`                                    |
+| `prerequisites`      |          | Array&lt;Link&gt; | max 3     | Article **slugs**, not ids. See §6                                      |
+| `related`            |          | Array&lt;Link&gt; | max 4     | Article **slugs**, not ids. See §6                                      |
+| `lastReviewed`       | ✔        | Date              |           | **Derived on every push. Never write it in front matter**               |
+| `order`              |          | Integer           |           | Position within the category                                            |
+| `versionScope`       |          | Symbol            | max 256   | e.g. `ES2015 (ES6) and later; React examples target React 18+`          |
+| `readingTime`        |          | Integer           |           | Minutes                                                                 |
 
-**`order` uses increments of 10**, so an article can be inserted between two
+**`order` uses increments of 100**, so an article can be inserted between two
 existing ones without renumbering. The sequence is pedagogical — the order someone
 should read them — not alphabetical.
 
@@ -140,16 +139,16 @@ should read them — not alphabetical.
 
 **Never inline a gotcha in the body.** It is a separate entry, linked by reference.
 
-| Field          | Required | Type              | Limit         | Notes                                                            |
-| -------------- | -------- | ----------------- | ------------- | ---------------------------------------------------------------- |
-| `id`           |          | —                 |               | Present only on a reused gotcha. **Omit the key entirely** on a new one |
-| `symptom`      | ✔        | Symbol            | 10–120 chars  | The **display field**. Write it in the **first person**          |
-| `slug`         | ✔        | Symbol, unique    |               | **Describes the symptom, never the article**                     |
-| `errorMessage` |          | Symbol            | max 200       | Only when the console prints something verbatim. **Otherwise omit the key** — an empty value parses as `null` |
-| `cause`        | ✔        | Text              | max 600       | One or two sentences                                             |
-| `fix`          | ✔        | Text              | max 900       | Concrete. If there are several fixes, say when each applies      |
-| `category`     | ✔        | Link → category   | exactly 1     | **The gotcha's own category** — not necessarily the article's    |
-| `tag`          |          | Array&lt;Link&gt; | max 3         | **Three, where an article allows four.** Different limits        |
+| Field          | Required | Type              | Limit        | Notes                                                                                                         |
+| -------------- | -------- | ----------------- | ------------ | ------------------------------------------------------------------------------------------------------------- |
+| `id`           |          | —                 |              | Present only on a reused gotcha. **Omit the key entirely** on a new one                                       |
+| `symptom`      | ✔        | Symbol            | 10–120 chars | The **display field**. Write it in the **first person**                                                       |
+| `slug`         | ✔        | Symbol, unique    |              | **Describes the symptom, never the article**                                                                  |
+| `errorMessage` |          | Symbol            | max 200      | Only when the console prints something verbatim. **Otherwise omit the key** — an empty value parses as `null` |
+| `cause`        | ✔        | Text              | max 600      | One or two sentences                                                                                          |
+| `fix`          | ✔        | Text              | max 900      | Concrete. If there are several fixes, say when each applies                                                   |
+| `category`     | ✔        | Link → category   | exactly 1    | **The gotcha's own category** — not necessarily the article's                                                 |
+| `tag`          |          | Array&lt;Link&gt; | max 3        | **Three, where an article allows four.** Different limits                                                     |
 
 `cause` and `fix` are rendered through `components/Markdown.jsx`, so fenced code
 blocks must declare a language and `#` headings are never used. Keep them to prose,
@@ -232,11 +231,11 @@ happens**, the **gotcha gives symptom → fix**.
 
 ## 5. Interview question blocks
 
-| Field         | Required | Type   | Limit   | Notes                                              |
-| ------------- | -------- | ------ | ------- | -------------------------------------------------- |
-| `id`          |          | —      |         | **Omit the key entirely** on a new question        |
-| `question`    | ✔        | Symbol |         | Reads like something a person would actually ask   |
-| `shortAnswer` | ✔        | Text   | max 600 | What you could say out loud in 30–60 seconds       |
+| Field         | Required | Type   | Limit   | Notes                                            |
+| ------------- | -------- | ------ | ------- | ------------------------------------------------ |
+| `id`          |          | —      |         | **Omit the key entirely** on a new question      |
+| `question`    | ✔        | Symbol |         | Reads like something a person would actually ask |
+| `shortAnswer` | ✔        | Text   | max 600 | What you could say out loud in 30–60 seconds     |
 
 Unlike a gotcha, an interview question belongs to one article and is never shared.
 
