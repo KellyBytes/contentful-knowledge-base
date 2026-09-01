@@ -7,6 +7,7 @@ tag:
   - rendering
   - async
   - performance
+  - interview-frequent
 difficulty: Intermediate
 summary: >-
   The function an effect returns runs before every re-run and once more on
