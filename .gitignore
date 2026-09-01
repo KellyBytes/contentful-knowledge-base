@@ -48,3 +48,4 @@ notes/
 # claude
 .claude/settings.local.json
 .claude/*.local.json
+.claude/context.md
