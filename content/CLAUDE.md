@@ -16,8 +16,16 @@ content/
   knowledge-base/<category-slug>/<article-slug>.md
   _reference/
     content-model.json, categories.json, tags.json, space-meta.json   generated — never hand-edit
+    article-template.md                              the authoritative front matter shape
     topic-ownership.md                               hand-maintained
+  _ideas/<date>_<category>.md                        /article-ideas proposal runs; /new-article follows them
+  _archives/<article-slug>_v1.md                     gitignored personal reference — not part of the repo
 ```
+
+`_archives/` holds superseded drafts. It is **gitignored personal reference
+material, not part of the repository** — nothing in the pipeline reads it, and it
+is never a source. Never quote a heading, an analogy, or a claim out of an archived
+draft into a live file.
 
 The directory name is Contentful's category slug, not the display name:
 
@@ -74,15 +82,20 @@ back by the push script. A new article and a new child entry carry no id key at
 all — a copied id makes the push overwrite whatever entry it belongs to.
 
 | Key                       | Rule                                                                                         |
-| ------------------------- | -------------------------------------------------------------------------------------------- | -------------- | ---------- |
+| ------------------------- | -------------------------------------------------------------------------------------------- |
 | `contentType`             | Always `article`                                                                             |
 | `title`                   | ≤256 chars. Noun phrase, not a question. Not the same wording as the slug                    |
 | `slug`                    | lowercase kebab-case only — Contentful rejects anything else                                 |
 | `category`                | Exactly one of the eight names below. Never invent one                                       |
 | `tag`                     | 1–4 names from the thirteen below. Never invent one                                          |
-| `difficulty`              | `Beginner`                                                                                   | `Intermediate` | `Advanced` |
+| `difficulty`              | `Beginner` / `Intermediate` / `Advanced`                                                     |
 | `summary`                 | **≤256 chars — this is a Symbol, not a Text field.** 1–2 sentences, plain prose, no markdown |
 | `order`                   | Integer. Position within the category                                                        |
+| `versionScope`            | ≤256 chars, one line. Which language / runtime versions the article assumes                  |
+| `readingTime`             | Integer, minutes                                                                             |
+| `prerequisites`           | **Max 3.** Article slugs, not ids. Each must already have a `contentfulEntryId`              |
+| `related`                 | **Max 4.** Article slugs, not ids                                                            |
+| `gotchas`                 | **Max 6.** A new gotcha has **no `id` key at all** — omit the line                           |
 | `contentfulEntryId`       | Written by the push script. **Never write or edit this by hand**                             |
 | `interviewQuestions[].id` | Same. A new question has **no `id` key at all** — omit the line                              |
 
@@ -130,7 +143,7 @@ topic can be worth writing and still not earn the tag. Floating-point precision
 is worth an article; a candidate who has not read it is unlikely to lose an
 interview over it.
 
-The judgement is scoped to the kind of role that would touch this topic — a
+The judgment is scoped to the kind of role that would touch this topic — a
 CSS question does not come up in a back-end screen, and an index-design
 question does not come up in a front-end one. Ask whether a candidate for the
 roles this article serves would be likely to face it, not whether every
@@ -166,31 +179,44 @@ entries; the body is specified here. Before drafting, read
 `knowledge-base/javascript/closures-explained.md` in full — it is the reference
 implementation of everything below. Match its shape and its voice, not its
 headings: section titles are specific to each article
-(`## The backpack analogy`, `## The office building analogy`), never generic.
+(`## The backpack analogy`, `## The tracking number analogy`), never generic.
 
-Every article follows the same arc. Section names vary; the sequence does not.
+Every article moves through the same shape. Section names vary and some steps do
+not apply to every topic, but the order of the ones that do is stable — the puzzle
+opens, with no heading; the analogy follows it when there is one; and steps 9–11
+always close, in that order.
 
 1. **Opening — no heading. Start with a puzzle, not a definition.** One line
    inviting a prediction ("Run this and predict what it logs before reading
    on."), then a fenced `js` block short enough to hold in your head. Follow it
    with one paragraph on what actually happens and why it surprises, and only
    then one paragraph that names and defines the thing — the reader has to see
-   the behaviour before a definition means anything. Close by declaring the
+   the behavior before a definition means anything. Close by declaring the
    shape of what follows when there is one ("those are the only three
    differences"). `knowledge-base/javascript/closures-explained.md` is the
    reference implementation.
 
-   When the topic is routinely confused with a neighbour, that separation is
+   When the topic is routinely confused with a neighbor, that separation is
    its own section straight after the opening, not part of it
    (`## Scope and closure are not the same thing`).
 
-2. **`## The <object> analogy`** — one concrete, physical, non-technical
-   metaphor, followed by one or two refinements that keep it honest ("the
-   backpack holds the actual variables, not photocopies").
-3. **`## The simplest possible example`** — the smallest runnable snippet, then
-   an ASCII diagram of what just happened.
+2. **`## The <object> analogy` — when one genuinely helps.** One concrete,
+   physical, non-technical metaphor, followed by one or two refinements that keep
+   it honest ("the backpack holds the actual variables, not photocopies"). **This
+   step is optional.** Some topics resist a physical metaphor, and a strained one
+   costs more than it gives — the two-caveat rule below is the same judgment made
+   earlier. `var-let-const` has no analogy and is right not to.
+3. **The diagram** — an ASCII diagram in a `text` block showing what the opening
+   snippet just did. Sometimes its own section (`## What actually happens` in
+   `closures-explained`, `## The simplest possible example` in
+   `useeffect-cleanup`), sometimes folded into the analogy or the first body
+   section. Where it sits varies; that the reader gets a picture before the body
+   starts does not.
 4. **Two to four body sections** — progressive, each building on the last.
-   Numbered when parallel (`## Difference 1: scope`, `## Use case 2: ...`).
+   Numbered when parallel (`## Difference 1: scope`, `## Use case 2: ...`). They
+   are not confined to one block: an article can return to a body section after
+   the trap or after where-it-shows-up when the material calls for it
+   (`## Closures vs classes` sits between steps 6 and 7 in `closures-explained`).
 5. **The trap** — the mistake that actually bites people, with the wrong and
    right code side by side.
 6. **Where it shows up** — the same idea in React, Node, or the build, so the
@@ -199,10 +225,18 @@ Every article follows the same arc. Section names vary; the sequence does not.
    comparison table when there are three or more things to distinguish.
 8. **`## The rule of thumb`** — the closing decision heuristic. Not a summary.
    Give the reader something to _do_ when they next hit this.
+9. **`## Version and environment notes`** — which language, runtime, or library
+   versions the article assumes, and what changes outside them. Mirrors the
+   `versionScope` field.
+10. **`## Check yourself`** — two code-prediction exercises ("What does this
+    print?", each followed by a snippet), with the answers inside a `<details>` /
+    `<summary>Answers</summary>` block. Not the same thing as
+    `interviewQuestions`, which are spoken answers and live in frontmatter.
+11. **`## Sources`** — MDN or specification links for the claims made.
 
 ### Length
 
-There is no target. Existing articles run roughly 1,200–1,800 words including
+There is no target. Existing articles run roughly 1,300–1,900 words including
 code, and the length follows from how wide the topic is — it is not a number to
 write towards. A word count stated as a goal only ever produces padding.
 
@@ -220,7 +254,7 @@ wrong rather than the prose:
 `difficulty` is decided by **how much the reader has to know already**, never by
 length. A long Beginner article and a short Intermediate one are both normal —
 `primitive-vs-reference-types` (Beginner, 1,593 words) is longer than four of the
-five Intermediate articles.
+five Intermediate articles in the JavaScript category.
 
 - **Beginner** — needs nothing beyond basic JavaScript syntax.
 - **Intermediate** — assumes the reader has understood the Beginner articles in
@@ -255,11 +289,12 @@ Links are root-relative: `/kb/<category-slug>/<article-slug>`.
 
 ### Analogy rules
 
-- One analogy per article. Never stack a second for the same concept.
+- At most one analogy per article — none is fine. Never stack a second for the
+  same concept.
 - It must be a physical thing the reader can picture: a room, a backpack, a name
   tag.
 - If it needs more than two caveats to stay accurate, it is the wrong analogy.
-  Find a better one rather than patching it.
+  Find a better one, or go without, rather than patching it.
 - Reuse the analogy's vocabulary later in the article ("reaches into the
   backpack") so it does the work of a shared mental model instead of sitting as
   decoration.
@@ -293,8 +328,8 @@ component overrides — what the plugins support is what you get.
 - Allowed: `h2`–`h4`, lists, tables, fenced code, inline code, links,
   blockquotes
 - **Raw HTML is enabled, but only `<details>` and `<summary>` are sanctioned** —
-  the "Answers" block every article closes with. Reaching for any other tag
-  needs a reason; if Markdown can express it, write Markdown
+  the "Answers" block in every article's `## Check yourself` section. Reaching for
+  any other tag needs a reason; if Markdown can express it, write Markdown
 - **Leave a blank line after `<summary>` and before `</details>`.** Without them
   the inner Markdown is swallowed — the answers render as nothing, with no error
   anywhere
@@ -302,7 +337,7 @@ component overrides — what the plugins support is what you get.
   a decision, not a default
 - Not available: math — `remark-math` is not installed, so `$x$` renders as
   literal text
-- Images render as a bare `<img>` with no optimisation and no Contentful asset
+- Images render as a bare `<img>` with no optimization and no Contentful asset
   behind them. KB bodies do not use images — the diagrams are `text` blocks
 - **Never use `h1`.** The `title` field renders as the page's `h1`
 - Tables: GFM pipe syntax only
@@ -352,7 +387,7 @@ Structure of one answer:
 
 1. The direct answer, first sentence, no wind-up
 2. The mechanism, or the distinction that matters
-3. A closing line on **how to deliver it** — what to emphasise, or what getting
+3. A closing line on **how to deliver it** — what to emphasize, or what getting
    it backwards causes
 
 Four questions, four different jobs:
@@ -362,7 +397,7 @@ Four questions, four different jobs:
 | 1   | Define it                      | "What is a closure?"                                      |
 | 2   | A distinction people get wrong | "Do two closures from the same function share variables?" |
 | 3   | Puncture a false shortcut      | "Does `let` solve every closure problem?"                 |
-| 4   | A judgement call               | "When would you choose a closure over a class?"           |
+| 4   | A judgment call                | "When would you choose a closure over a class?"           |
 
 Never reference the article itself ("as explained above") — these are read on
 their own. Never repeat a body section verbatim.
@@ -405,8 +440,13 @@ npm run article:push -- content/knowledge-base/javascript/<slug>.md
 ```
 
 Push creates or updates a **draft**. Publishing is manual, in the Contentful web
-app, after review. Interview question child entries are published automatically
-— an unlinked question entry is invisible on the site, and leaving it as a draft makes the parent article render an empty section with no error.
+app, after review.
+
+**Child entries are the exception — both `interviewQuestion` and `gotcha` entries
+are published automatically by the push script.** That is necessary rather than a
+shortcut: the Delivery API omits `fields` for an unpublished reference, so a child
+left as a draft makes the parent article render an empty section with no error
+anywhere.
 
 ---
 
@@ -434,5 +474,10 @@ app, after review. Interview question child entries are published automatically
   overlap. Give the short version and link to the owner rather than covering it
   twice at depth. If the new article has the better claim to ownership, say so
   and stop — do not silently rewrite the existing one.
-- Removing a question from frontmatter unlinks it but does not delete the entry
-  in Contentful. Those need manual cleanup.
+- Removing a question or a gotcha from frontmatter unlinks it but does not delete
+  the entry in Contentful. Those need manual cleanup.
+- **A gotcha is shared, so unlinking is not removal.** Dropping one from an
+  article leaves the entry published and still on the site for as long as any
+  other article links it — four of the twenty-eight gotcha entries are currently
+  linked by two articles each. Check `links_to_entry` before assuming an unlink
+  took something off the site.
