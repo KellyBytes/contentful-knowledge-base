@@ -22,14 +22,13 @@ Recent history, for tone and granularity:
 
 1. Read the full diff of everything that changed. Do not commit from the summary alone — the subject line has to describe what actually changed.
 2. Decide how many commits the work should be. See below.
-3. For each commit: stage its explicit paths, show the message, commit.
-4. For each commit, in order:
+3. For each commit, in order:
+   - Show the message you are about to use, and the exact paths you will stage.
+   - Run `git add` with those paths spelled out. Never a directory when the files inside it are known — `git add a.md b.md`, not `git add dir/`.
+   - Run `git commit -m "<message>"`.
+4. Print `git log --oneline -N` afterwards, where N is the number of commits made.
 
-- Show the message you are about to use, and the exact paths you will stage.
-- Run `git add` with those paths spelled out. Never a directory when the files inside it are known — `git add a.md b.md`, not `git add dir/`.
-- Run `git commit -m "<message>"`.
-
-Staging and committing each surface as a confirmation before they run. That confirmation is the review step — make the command readable rather than clever, because it is the last thing seen before the write. 4. Print `git log --oneline -N` afterwards, where N is the number of commits made.
+Staging and committing each surface as a confirmation before they run. That confirmation is the review step — make the command readable rather than clever, because it is the last thing seen before the write.
 
 ## How many commits
 
