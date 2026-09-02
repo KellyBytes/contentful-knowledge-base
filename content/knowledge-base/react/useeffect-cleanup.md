@@ -10,7 +10,7 @@ tag:
   - interview-frequent
 difficulty: Intermediate
 summary: >-
-  The function an effect returns runs before every re-run and once more on
+  The function that an effect returns runs before every re-run and once more on
   unmount. Skipping it is how timers stack up, listeners pile on, and a slow
   response overwrites a newer one.
 order: 600
