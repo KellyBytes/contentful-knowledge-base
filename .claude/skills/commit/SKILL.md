@@ -34,10 +34,9 @@ Staging and committing each surface as a confirmation before they run. That conf
 
 Default to one. Split when the work contains changes that a reader would want to find separately, and that stand on their own if the other half is reverted.
 
-When splitting, commit in dependency order: the change that enables or explains
-the other goes first. A tool before its output, a convention before the data
-brought in line with it. When neither depends on the other, commit the smaller
-one first — it reads as the aside it is.
+When splitting, commit in dependency order: the change that enables or explains the other goes first. A tool before its output, a convention before the data brought in line with it, a fix before the work that relies on it.
+
+When neither depends on the other, the order does not matter. Pick one and say why in the report, rather than reaching for a rule that does not exist. Size is not a reason — a one-line change can be the point of the work and a fifty-line change can be the aside.
 
 The repository's own history is the reference. Recent examples:
 
