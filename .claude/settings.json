@@ -1,12 +1,12 @@
 {
   "permissions": {
-    "defaultMode": "plan",
     "allow": [
       "Read(./content/**)",
       "Edit(./content/**)",
       "Write(./content/**)",
       "Bash(npm run article:*)"
     ],
-    "deny": ["Read(./.env*)", "Bash(git push:*)"]
+    "deny": ["Read(./.env*)", "Bash(git push:*)"],
+    "defaultMode": "plan"
   }
 }
