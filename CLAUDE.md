@@ -228,6 +228,12 @@ Before creating a gotcha, query for an existing entry with the same slug. If one
 
 `matter.stringify` re-serialises the whole frontmatter, so any push that creates a child entry can reflow YAML — quoting, line wrapping, and key order are not preserved. Run `git diff` after a push that reports a created entry.
 
+A brand-new article is the exception. Its first push happens before its first
+commit, so `git diff` has no baseline and shows nothing. Check the scalar styles
+by eye instead — a `cause:` or `fix:` written as `|-` must still be `|-` — and
+confirm with `--dry-run`. `NO CHANGES` comes back only when the written-back
+file and Contentful agree, which is the real check either way.
+
 ---
 
 ## Known traps in this codebase
