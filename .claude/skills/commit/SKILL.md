@@ -34,6 +34,11 @@ Staging and committing each surface as a confirmation before they run. That conf
 
 Default to one. Split when the work contains changes that a reader would want to find separately, and that stand on their own if the other half is reverted.
 
+When splitting, commit in dependency order: the change that enables or explains
+the other goes first. A tool before its output, a convention before the data
+brought in line with it. When neither depends on the other, commit the smaller
+one first — it reads as the aside it is.
+
 The repository's own history is the reference. Recent examples:
 
 - A convention documented in `content/CLAUDE.md` and the article data brought in line with it went in as two commits — `docs(kb):` then `content(kb):`. Documentation and content are different readers.
