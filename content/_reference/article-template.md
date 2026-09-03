@@ -93,7 +93,7 @@ gotchas: # max 6
 prerequisites: # max 3, article slugs
   - var-let-const
 related: [] # max 4, article slugs
-order: 400 # optional, integer, increments of ten
+order: 400 # optional, integer, increments of hundred
 versionScope: ES2015 (ES6) and later # optional, max 256
 readingTime: 12 # optional, integer, minutes
 ---
