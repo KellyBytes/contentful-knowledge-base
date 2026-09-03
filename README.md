@@ -3,7 +3,7 @@
 ## Overview
 
 Kelly's Notes is a content platform built with **Next.js (App Router) and Contentful**, serving two
-distinct content types from a single headless CMS:
+authored content types from a single headless CMS:
 
 - **Blog Posts** — long-form writing on web development and tech
 - **Knowledge Base** — categorized reference articles with difficulty levels and interview questions
@@ -27,12 +27,13 @@ doing, then implementing the current equivalent.
   <img src="./public/images/kellys-notes-desktop.png" height="250" style="margin-right: 5px;"/>
   <img src="./public/images/kellys-notes-mobile.png" height="250" />
 </p>
+
 ---
- 
+
 ### ▶ Live Demo
- 
+
 🔗 https://notes.kellybytes.dev/
- 
+
 <br />
 
 ## Core Features
@@ -95,11 +96,20 @@ doing, then implementing the current equivalent.
 - `@contentful/rich-text-react-renderer`
 - `react-markdown`
 
+### Content Pipeline
+
+- Node.js (ESM scripts, no build step)
+- Contentful Management API (`contentful-management`)
+- `gray-matter` for front matter
+- Claude Code — custom skills and layered instruction files
+
 ### UI
 
 - Tailwind CSS 4
 - `@tailwindcss/typography`
 - Headless UI
+- `remark-gfm`, `rehype-raw`, `rehype-highlight`
+- Fuse.js (client-side search)
 
 ### Deployment
 
@@ -149,15 +159,15 @@ lib/
 
 ## Content Model
 
-| Content Type          | Body Field           | Key Fields                                                                                                         |
-| --------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------ | --- |
-| **Post**              | Rich Text            | title, slug, excerpt, cover image, author, published date                                                          |
-| **Article**           | Long Text (Markdown) | title, slug, category, tag, difficulty, summary, versionScope, prerequisites, related, gotchas, interviewQuestions |
-| **Gotcha**            | —                    | symptom, slug, errorMessage, cause, fix, category, tag                                                             |
-| **InterviewQuestion** | —                    | question, shortAnswer                                                                                              |
-| **Category**          | —                    | name, slug, description, order                                                                                     |
-| **Tag**               | —                    | name, slug                                                                                                         |
-| **Author**            | —                    | name, avatar, bio                                                                                                  |     |
+| Content Type          | Body Field           | Key Fields                                                                                                                                           |
+| --------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Post**              | Rich Text            | title, slug, excerpt, cover image, author, published date                                                                                            |
+| **Article**           | Long Text (Markdown) | title, slug, category, tag, difficulty, summary, order, versionScope, readingTime, lastReviewed, prerequisites, related, gotchas, interviewQuestions |
+| **Gotcha**            | —                    | symptom, slug, errorMessage, cause, fix, category, tag                                                                                               |
+| **InterviewQuestion** | —                    | question, shortAnswer                                                                                                                                |
+| **Category**          | —                    | name, slug, description, order                                                                                                                       |
+| **Tag**               | —                    | name, slug                                                                                                                                           |
+| **Author**            | —                    | name, avatar, bio                                                                                                                                    |
 
 The body field types were chosen intentionally. Blog posts benefit from Rich Text's embedded-entry support and structured editing, while knowledge base articles are code-heavy and are authored far more efficiently in Markdown.
 Gotchas and interview questions are separate entries rather than body content, because both are reused across articles and both need to be listed independently — a pitfall is most useful when it can be found by its symptom rather than by knowing which article discusses it.
@@ -166,48 +176,52 @@ Gotchas and interview questions are separate entries rather than body content, b
 
 ## How Articles Get Written
 
-Knowledge base articles are produced by a repeatable pipeline rather than written
-ad hoc. The goal is consistency as the article count grows: the same structure, the
-same front matter, and the same standard for what qualifies as a reusable "gotcha,"
-so the CMS stays queryable instead of becoming a pile of prose.
+Knowledge base articles are produced by a repeatable pipeline rather than written ad hoc. The goal is consistency as the article count grows: the same structure, the same front matter, and the same standard for what qualifies as a reusable "gotcha," so the CMS stays queryable instead of becoming a pile of prose.
 
 ```
 content/_reference/            → the contracts the pipeline writes against
-├── article-template.md          structure, front matter, length budget by difficulty
+├── article-template.md          front matter shape and field constraints
 ├── topic-ownership.md           which concept belongs to which article
 ├── categories.json              fixed category list
-├── tags.json                    fixed tag list; three per article
+├── tags.json                    fixed tag list; four per article maximum
 └── content-model.json           exported Contentful schema
 
+content/_ideas/                → what /article-ideas proposed, and when
+content/CLAUDE.md              → how the body is written: opening, length,
+                                 difficulty, YAML scalar style
+
 .claude/skills/
-├── article-ideas/               proposes the next topic against topic-ownership.md
-└── new-article/                 drafts against article-template.md
+├── article-ideas/               proposes topics against topic-ownership.md
+├── new-article/                 drafts against the template and the idea run
+└── commit/                      splits the work into commits and writes messages
 
 scripts/
-├── article-push.mjs             creates or updates the Contentful entry
-├── article-pull.mjs             pulls the resolved entry back, with entry IDs
-└── export-content-model.mjs     regenerates content-model.json
+├── article-push.mjs             validates, reports a diff, syncs to Contentful
+├── article-pull.mjs             pulls resolved entries back into markdown
+└── export-content-model.mjs     regenerates the reference JSON from Contentful
 ```
 
 ### Design decisions
 
-- **The template is a contract, not a prompt.** `article-template.md` is written to be
-  read by a human reviewer as much as by the drafting skill. It specifies when a
-  metaphor is appropriate, when a comparison table is not, and what makes a pitfall
-  worth extracting into its own entry. A generated draft is measured against it.
-- **Reference data lives in the repo.** Categories, tags, and the exported content
-  model are version-controlled files rather than knowledge the skill has to hold.
-  Changing the taxonomy is a diff, not a prompt edit.
-- **Round-trip, not one-way.** Push creates the entry; pull writes the resolved
-  entry back to the markdown file with its Contentful IDs. The file in the repo stays
-  the thing you can diff and review.
-- **Gotchas are shared entries, not body text.** A pitfall such as "loop callbacks
-  all print the same final number" is referenced by both the `var-let-const` and
-  `closures-explained` articles rather than duplicated into each. Reverse lookups use
-  `links_to_entry`, so no back-reference field has to be kept in sync.
+- **The template is a contract, not a prompt.** `article-template.md` is written to be read by a human reviewer as much as by the drafting skill. It specifies when a metaphor is appropriate, when a comparison table is not, and what makes a pitfall worth extracting into its own entry. A generated draft is measured against it, and the skill reports its own measurements — character counts, tag counts, word counts — rather than asserting it complied.
 
-The skills are in progress; the reference contracts and the push/pull scripts are in
-use today.
+- **Reference data lives in the repo.** Categories, tags, and the exported content model are version-controlled files rather than knowledge the skill has to hold. Changing the taxonomy is a diff, not a prompt edit.
+
+- **The pipeline refuses more often than it writes.** A push aborts when two articles disagree about a shared gotcha, when a new gotcha's slug already exists in the space, or when an article references a sibling that has never been pushed. `--dry-run` prints a field-level diff — line-level for the body, resolved slugs rather than entry IDs for the links — before anything is written. The guards earned their keep on their first real run: the consistency check caught two genuine mismatches that would otherwise have silently rewritten an entry two articles depend on.
+
+- **Nothing in the repository publishes an article.** The push script creates and updates drafts. Publishing happens by hand in the Contentful web app, after the draft has been previewed. Child entries — gotchas and interview questions — are the one exception, and only because the Delivery API omits `fields` for unpublished references, so a draft child makes a published article render an empty section with no error anywhere.
+
+- **Markdown is the source of truth; Contentful is a delivery target.** When the two disagree, the markdown wins and is re-pushed. Articles are resolved by the entry ID stored in their front matter, never by slug — a near match would overwrite an unrelated article, and there is no fallback that could allow it.
+
+- **The agent's permissions are narrower than its instructions.** `CLAUDE.md` documents what not to do; `.claude/settings.json` denies it outright. Push, reset, restore, and reads of `.env*` are unavailable rather than discouraged, because a rule in a document is a request and a permission is not.
+
+- **Gotchas are shared entries, not body text.** A pitfall such as "loop callbacks all print the same final number" is referenced by both the `var-let-const` and `closures-explained` articles rather than duplicated into each. That sharing is the reason for the consistency check above: writing one entry changes every article that links it.
+
+### What the pipeline does not decide
+
+It does not decide whether an article is correct. The checks are structural — field limits, link integrity, consistency between copies of a shared entry — and a draft can satisfy every one of them and still describe a behavior that does not happen.
+
+Technical claims need a separate check: running the code an article contains, and confirming version-specific statements against primary sources. That step sits deliberately outside the generated pipeline — a draft cannot be trusted to audit itself, and executing a snippet produces an answer that does not depend on anyone's judgment. Automating the executable half of that check is the next piece of work.
 
 <br />
 
@@ -277,6 +291,18 @@ Tailwind's Preflight resets browser typographic defaults, which is ideal for com
 CMS-generated HTML where class names cannot be applied to individual elements. The `prose` plugin exists
 precisely for this case — a reminder that a tool's design intent usually explains its behavior.
 
+### 6. A Shared Entry Turns Every Write Into a Fan-Out
+
+Gotchas are referenced by several articles, and each article carries its own
+copy of the text in front matter. The obvious implementation — write whatever
+the article being pushed says — is last-write-wins, and it changes articles
+nobody touched, with nothing in the diff to show for it.
+
+The fix was not smarter merging. Before writing a shared entry, the script
+collects every article that links the same id and compares the copies; if any
+disagree, it aborts and names the files. Which copy is correct is a human
+decision, and a script that guesses at one is worse than a script that stops.
+
 <br />
 
 ## Getting Started
@@ -286,6 +312,7 @@ git clone https://github.com/KellyBytes/contentful-knowledge-base.git
 cd contentful-knowledge-base
 npm install
 cp .env.sample .env
+cp .env.local.sample .env.local
 npm run dev
 ```
 
@@ -296,6 +323,9 @@ CONTENTFUL_SPACE_ID=
 CONTENTFUL_ACCESS_TOKEN=
 CONTENTFUL_PREVIEW_ACCESS_TOKEN=
 CONTENTFUL_PREVIEW_SECRET=
+
+CONTENTFUL_MANAGEMENT_TOKEN=
+CONTENTFUL_ENVIRONMENT=
 ```
 
 A Contentful space configured with the content models described above is required.
@@ -319,6 +349,7 @@ Deployed to **Vercel** with:
 - RSS feed and sitemap generation
 - Table of contents and reading progress indicator
 - Full-text search backed by a dedicated index rather than a static payload
+- Automated verification of code blocks in knowledge base articles
 
 <br />
 
@@ -332,7 +363,7 @@ Kelly's Notes demonstrates my ability to:
 - Identify and close a real vulnerability class, and generalize the fix rather than patching one instance
 - Separate data access, domain logic, and presentation into maintainable layers
 - Ship and maintain a live application that grows over time
-- Design an AI-assisted authoring workflow around explicit, version-controlled contracts, so generated output is reviewable and consistent rather than ad hoc
+- Design an AI-assisted authoring pipeline that refuses to write when its inputs disagree, so generated output is reviewable and shared data cannot be silently overwritten
 
 It also serves a practical purpose: it is where I document what I learn, which means it is continuously used, maintained, and extended rather than finished and archived.
 
