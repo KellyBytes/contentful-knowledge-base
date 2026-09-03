@@ -165,39 +165,39 @@ Sequencing
 
 執筆順（依存関係の順）
 
-1. #1 structural-typing — order: 10。前提なし。#2 #5 #8 が直接依存し、残りも暗黙に前提にするので必ず最初。
-2. #3 any-unknown-and-never — order: 30。前提なし。#6 が依存するので早い段階で必要です。
-3. #2 type-vs-interface — order: 20。#1 の後。構造的互換を説明済みでないと「なぜ extends と & が違うのか」が書けません。
-4. #4 type-erasure-and-runtime-validation — order: 40。完全に独立しているので、上の3本のどこに差し込んでも成立します。Beginner 帯を埋める意味でここに置いています。
-5. #5 literal-types-and-widening — order: 50。#1 の後。satisfies を扱うため、代入互換性が済んでいる必要があります。
-6. #6 type-narrowing — order: 60。#3 の後（unknown を開く手段として narrowing を導入するため）。
-7. #7 discriminated-unions — order: 70。#6 の後でなければ書けません。tag による絞り込みは narrowing の応用そのものです。
-8. #8 generics-and-constraints — order: 80。#1 の後。#9 #10 の共通前提。
-9. #9 mapped-and-derived-types — order: 90。#8 の後でなければ書けません（mapped type は generic の上に乗ります）。
-10. #10 typing-react-components — order: 100。#8 の後。最後に置くのは、React 側の提案（特に #1 state-as-a-snapshot と #8 useref-and-escape-hatches）が先にあると、型の話だけに絞り込めるためです。React 側が未着手のまま書くと、挙動の説明を巻き込んで 2,200 語を超えます。
+1. #1 structural-typing — order: 100。前提なし。#2 #5 #8 が直接依存し、残りも暗黙に前提にするので必ず最初。
+2. #3 any-unknown-and-never — order: 300。前提なし。#6 が依存するので早い段階で必要です。
+3. #2 type-vs-interface — order: 200。#1 の後。構造的互換を説明済みでないと「なぜ extends と & が違うのか」が書けません。
+4. #4 type-erasure-and-runtime-validation — order: 400。完全に独立しているので、上の3本のどこに差し込んでも成立します。Beginner 帯を埋める意味でここに置いています。
+5. #5 literal-types-and-widening — order: 500。#1 の後。satisfies を扱うため、代入互換性が済んでいる必要があります。
+6. #6 type-narrowing — order: 600。#3 の後（unknown を開く手段として narrowing を導入するため）。
+7. #7 discriminated-unions — order: 700。#6 の後でなければ書けません。tag による絞り込みは narrowing の応用そのものです。
+8. #8 generics-and-constraints — order: 800。#1 の後。#9 #10 の共通前提。
+9. #9 mapped-and-derived-types — order: 900。#8 の後でなければ書けません（mapped type は generic の上に乗ります）。
+10. #10 typing-react-components — order: 1000。#8 の後。最後に置くのは、React 側の提案（特に #1 state-as-a-snapshot と #8 useref-and-escape-hatches）が先にあると、型の話だけに絞り込めるためです。React 側が未着手のまま書くと、挙動の説明を巻き込んで 2,200 語を超えます。
 
 ┌───────┬─────────────────────────────────────┬──────────────┐
 │ order │ slug │ difficulty │
 ├───────┼─────────────────────────────────────┼──────────────┤
-│ 10 │ structural-typing │ Beginner │
+│ 100 │ structural-typing │ Beginner │
 ├───────┼─────────────────────────────────────┼──────────────┤
-│ 20 │ type-vs-interface │ Beginner │
+│ 200 │ type-vs-interface │ Beginner │
 ├───────┼─────────────────────────────────────┼──────────────┤
-│ 30 │ any-unknown-and-never │ Beginner │
+│ 300 │ any-unknown-and-never │ Beginner │
 ├───────┼─────────────────────────────────────┼──────────────┤
-│ 40 │ type-erasure-and-runtime-validation │ Beginner │
+│ 400 │ type-erasure-and-runtime-validation │ Beginner │
 ├───────┼─────────────────────────────────────┼──────────────┤
-│ 50 │ literal-types-and-widening │ Intermediate │
+│ 500 │ literal-types-and-widening │ Intermediate │
 ├───────┼─────────────────────────────────────┼──────────────┤
-│ 60 │ type-narrowing │ Intermediate │
+│ 600 │ type-narrowing │ Intermediate │
 ├───────┼─────────────────────────────────────┼──────────────┤
-│ 70 │ discriminated-unions │ Intermediate │
+│ 700 │ discriminated-unions │ Intermediate │
 ├───────┼─────────────────────────────────────┼──────────────┤
-│ 80 │ generics-and-constraints │ Intermediate │
+│ 800 │ generics-and-constraints │ Intermediate │
 ├───────┼─────────────────────────────────────┼──────────────┤
-│ 90 │ mapped-and-derived-types │ Intermediate │
+│ 900 │ mapped-and-derived-types │ Intermediate │
 ├───────┼─────────────────────────────────────┼──────────────┤
-│ 100 │ typing-react-components │ Intermediate │
+│ 1000 │ typing-react-components │ Intermediate │
 └───────┴─────────────────────────────────────┴──────────────┘
 
 タグについて。 type-system はスペース全体で未使用のまま残っており、この10本すべてが借り手になります。data-modeling は #7 と #9、error-handling は #3 と #4 が借ります。interview-frequent は #1 #2 #3 #6 #7 #8 に付けるのが妥当です（article は最大4タグ）。

@@ -210,22 +210,20 @@ missing-await-on-return-skips-catch。#8 はここに寄りかかる形で書く
 
 Sequencing
 
-order は article content type では Integer / 任意 / unique 制約なし（content-model.json:213-218）で、lib/kb/sort.js は order → difficulty → title の順に見ます。既存は 10 刻みで 10〜70 が埋まっているので、既存記事を書き換えずに隙間へ挿入できます。
+order は article content type では Integer / 任意 / unique 制約なし（content-model.json:213-218）で、lib/kb/sort.js は order → difficulty → title の順に見ます。既存は 100 刻みで 100〜700 が埋まっているので、既存記事を書き換えずに隙間へ挿入できます。
 
 執筆順（依存関係の順）
 
-1. #1 truthiness-and-falsy-values — order: 15。前提なし。#2 と #3 の両方が「undefined だけが特別」という話をここに預けるので最初。
-2. #2 loose-vs-strict-equality — order: 22。primitive-vs-reference-types（20）の直後。同記事の「同一性としての ===」を受けて、値の変換側を引き取ります。
-3. #3 destructuring-and-default-parameters — order: 24。#1 の falsy と #2 の undefined 判定が済んでいる前提で書けます。
-4. #4 floating-point-numbers — order: 26。独立しているのでいつでも書けますが、Beginner 帯にまとめて置くのが読者の導線として自然です。
-5. #5 the-prototype-chain — order: 80。this-and-binding-rules（70）の直後。7本目までを読んだ読者が次に踏む段。
-6. #6 classes-and-private-fields — order: 90。#5 の後でなければ書けません（class を何の糖衣として説明するかが #5 に依存）。
-7. #8 error-objects-and-custom-errors — order: 100。promises-and-async-await（60）の ## Error handling を前提に、同期側と Error オブジェクト自体を引き取ります。
-8. #7 es-modules-and-commonjs — order: 110。依存なし。上記のどこに差し込んでも成立しますが、Intermediate 帯の末尾が座りが良い。
-9. #9 maps-sets-and-plain-objects — order: 120。primitive-vs-reference-types の参照同一性が前提（Map のキー比較がまさにそれ）。
-10. #10 debounce-and-throttle — order: 130。closures と event loop の両方に依存するので最後。ここまで来ると新規に説明することがほぼ残らず、実装そのものに集中できます。
-
-1点だけ判断が要ります。 Beginner 帯を 15 / 22 / 24 / 26 に詰めると、以降 Beginner 記事を足す余地が細くなります。既存7本の order を 100 刻みに振り直せば余裕は出ますが、それは7本すべての front matter 変更＝7本の push になるので、今回の提案には含めていません。振り直すなら新記事を書き始める前が唯一の安いタイミングです。
+1. #1 truthiness-and-falsy-values — order: 150。前提なし。#2 と #3 の両方が「undefined だけが特別」という話をここに預けるので最初。
+2. #2 loose-vs-strict-equality — order: 220。primitive-vs-reference-types（200）の直後。同記事の「同一性としての ===」を受けて、値の変換側を引き取ります。
+3. #3 destructuring-and-default-parameters — order: 240。#1 の falsy と #2 の undefined 判定が済んでいる前提で書けます。
+4. #4 floating-point-numbers — order: 260。独立しているのでいつでも書けますが、Beginner 帯にまとめて置くのが読者の導線として自然です。
+5. #5 the-prototype-chain — order: 800。this-and-binding-rules（700）の直後。7本目までを読んだ読者が次に踏む段。
+6. #6 classes-and-private-fields — order: 900。#5 の後でなければ書けません（class を何の糖衣として説明するかが #5 に依存）。
+7. #8 error-objects-and-custom-errors — order: 1000。promises-and-async-await（600）の ## Error handling を前提に、同期側と Error オブジェクト自体を引き取ります。
+8. #7 es-modules-and-commonjs — order: 1100。依存なし。上記のどこに差し込んでも成立しますが、Intermediate 帯の末尾が座りが良い。
+9. #9 maps-sets-and-plain-objects — order: 1200。primitive-vs-reference-types の参照同一性が前提（Map のキー比較がまさにそれ）。
+10. #10 debounce-and-throttle — order: 1300。closures と event loop の両方に依存するので最後。ここまで来ると新規に説明することがほぼ残らず、実装そのものに集中できます。
 
 なお data-modeling / type-system / security / caching の4タグは JavaScript カテゴリで未使用です。上の提案で借り手が付くのは #9 の data-modeling だけで、残る3つはこのカテゴリでは埋まりません。
 
