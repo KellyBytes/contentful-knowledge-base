@@ -1,0 +1,5 @@
+node_modules/
+react-legacy-*/
+reports/*
+!reports/_template.md
+*.mjs
