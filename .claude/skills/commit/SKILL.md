@@ -48,16 +48,20 @@ That last case is the test that matters: **if committing half the work leaves th
 
 ## Scopes actually in use
 
-| Prefix                                    | For                                                            |
-| ----------------------------------------- | -------------------------------------------------------------- |
-| `content(kb):`                            | Article Markdown — body, front matter, gotchas, questions      |
-| `style(kb):`                              | Prose and wording changes to articles with no substantive edit |
-| `format:`                                 | Whitespace, fences, line endings — no content change           |
-| `docs(kb):`                               | `content/CLAUDE.md`, `_reference/`, `_ideas/`                  |
-| `docs:`                                   | Root `CLAUDE.md`, `README.md`, anything repository-wide        |
-| `feat(skills):` / `fix(skills):`          | `.claude/skills/`                                              |
-| `feat(scripts):` / `fix(scripts):`        | `scripts/`                                                     |
-| `feat:` / `fix:` / `refactor:` / `chore:` | Application code, config, tooling                              |
+| Prefix                                    | For                                                                                                                    |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `content(kb):`                            | Article Markdown — body, front matter, gotchas, questions                                                              |
+| `style(kb):`                              | Prose and wording changes to articles with no substantive edit                                                         |
+| `format:`                                 | Whitespace, fences, line endings — no content change                                                                   |
+| `docs(kb):`                               | `content/CLAUDE.md`, `_reference/`, `_ideas/`                                                                          |
+| `docs:`                                   | Root `CLAUDE.md`, `README.md`, anything repository-wide                                                                |
+| `feat(skills):` / `fix(skills):`          | `.claude/skills/`                                                                                                      |
+| `feat(scripts):` / `fix(scripts):`        | `scripts/`                                                                                                             |
+| `feat(verify):` / `fix(verify):`          | `verify/package.json`, `verify/package-lock.json`, `verify/.gitignore` — the verification sandbox's pinned environment |
+| `docs(verify):`                           | `verify/reports/_template.md` — the report shape                                                                       |
+| `feat:` / `fix:` / `refactor:` / `chore:` | Application code, config, tooling                                                                                      |
+
+Nothing else under `verify/` is tracked. Per-run `.mjs` scripts, `react-legacy-*/` installs, and per-article reports are all gitignored by design — if one of them shows up in `git status`, that is a `.gitignore` problem to report, not a file to stage.
 
 Subject line only. English, imperative, no trailing period. Add a body only when the reason would not be recoverable from the diff — a judgement call, a constraint that forced the approach, a trade-off taken knowingly.
 
@@ -74,6 +78,8 @@ Check the recent log before writing the subject. If a similar subject is already
   `prerequisites`, `related`, or a gotcha or question block. The commit does
   not reach Contentful. Say which fields changed and that a push is needed.
   When a gotcha block changed, say which other articles link it.
+- A pinned dependency version changed in `verify/package.json`. Every report already written under `verify/reports/` recorded its results against whatever was pinned at the time — say which package changed, from what to what, and confirm it was intentional. An accidental bump silently invalidates the version comparisons those reports made.
+- A file that `verify/.gitignore` is supposed to exclude appears as untracked — a stray `.mjs` from a verification run, a `react-legacy-*/` file, a report other than `_template.md`. Do not stage it. Say which file and that the ignore rule needs checking.
 - You cannot describe a change in one line because you do not understand it. Say that, rather than writing a vague subject.
 
 Reporting is not failure. A commit with a wrong or vague message cannot be fixed here — `git commit --amend` and `git reset` are both forbidden.
@@ -85,4 +91,5 @@ Reporting is not failure. A commit with a wrong or vague message cannot be fixed
 - Stage with `git add .` or `git add -A`. Pass explicit paths, always.
 - Stage a path you were not asked about without saying so first.
 - Commit `.env`, `.env.local`, or anything under `content/_archives/` (gitignored, personal reference).
+- Commit a `.mjs` script from a `/verify-article` run. They are scratch by design.
 - Write a subject that describes the process ("update files", "apply changes") rather than the change.
