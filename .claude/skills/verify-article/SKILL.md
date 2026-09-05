@@ -75,6 +75,7 @@ Before running anything, list every candidate claim in the report:
 
 - Code blocks with a stated predicted output (an inline comment, a sentence right before or after the block, or a `<details>` answer)
 - Sentences in `versionScope` or "Version and environment notes" that name a specific version or a behavior change across versions
+- Concept-level claims that would need a citation to back them — a term introduced and bolded for the first time, a mechanism stated in a gotcha's `cause`, a claim about _why_ something behaves the way it does. List these as their own set, separate from the URLs below. Layer 3 checks this set against that one as two independent lists, not as pairs matched by position.
 - Every URL under `## Sources`
 - Every entry in `gotchas[]`
 
@@ -102,12 +103,37 @@ Lay the two texts side by side. Do not write "確認済み" or "矛盾" — that
 
 ### Step 3 — Sources audit (Layer 3)
 
-For every URL under `## Sources`:
+Sources are a flat reading list, not one-source-per-claim footnotes. A claim's
+support does not have to come from whichever source sits nearest it in the
+list or in the article's text — check each claim against the whole set.
 
-1. Fetch it.
-2. Find the passage relevant to whichever nearby claim this source is presumably backing.
-3. Quote it next to the article's claim.
-4. A fetch failure, a dead link, or a page that no longer says anything like the claim is itself a finding — report it, don't silently skip it.
+1. Fetch every URL under `## Sources` first, before checking any individual
+   claim. You need the full set in hand — checking one claim against one
+   source at a time, in list order, is how a claim that's genuinely covered
+   by the third or fourth source ends up reported as unsupported.
+2. For each concept-level claim from Step 0, search across **all** fetched
+   sources — not just whichever one is positionally closest in the article —
+   for a passage that supports it.
+3. A match does not require the article's exact wording, or its exact
+   technical term, to appear in the source. A general statement that
+   logically covers the specific case the article makes counts as support —
+   for example, a source saying a value "never changes within a render, even
+   if its event handler's code is asynchronous" covers a specific claim about
+   reading state after an `await`, even though the word "await" never
+   appears there. Judgement is unavoidable here, so show your reasoning in
+   one line next to the quote — why it does or doesn't cover the claim —
+   rather than only asserting a conclusion.
+4. Quote the supporting passage(s) next to the article's claim. If two or
+   more sources each cover part of the same claim, show all of them — that's
+   the normal shape for a claim like "batching," not a discrepancy to explain
+   away.
+5. Only report a claim as unsupported once it has been checked against every
+   fetched source and none of them cover it, even loosely. A claim not
+   covered by the nearest source but covered by another one in the list is
+   not a finding.
+6. A fetch failure, a dead link, or a page that no longer says anything like
+   any claim it might once have supported is itself a finding — report it,
+   don't silently skip it.
 
 ### Step 4 — Gotcha fix verification (Layer 4)
 
@@ -118,7 +144,7 @@ For each entry in `gotchas[]`:
 3. Apply exactly the change described in `fix`. Run that.
 4. Report all three: the "before" snippet, its actual behavior, the "after" snippet, its actual behavior.
 
-## Known pitfalls (from a prior manual run — do not repeat these)
+## Known pitfalls (from prior runs — do not repeat these)
 
 - **A render-count assertion is easy to get subtly wrong.** Log the value at each render rather than incrementing a counter across separate closures — a counter-based check produced a false "batching didn't happen" result once on a claim that was actually correct. If a result contradicts the article, re-verify with a second, differently-built check before reporting it as a discrepancy.
 - **Never hand-transcribe JSX/JS.** Extract and run the literal text (see Step 1.1).
@@ -129,6 +155,8 @@ For each entry in `gotchas[]`:
   `act()` batches its own contents, so a comparison wrapped in it reports
   identical render counts on every version and proves nothing. Use real timers
   and real awaits, and read the render log rather than a counter.
+- **A source not covering a claim doesn't mean the claim is unsupported.** Check it against every fetched source before reporting an absence — a batching claim was once flagged as unsupported by the first source in the list, when the fourth source (titled "Automatic batching") covered it plainly. Position in the list carries no meaning.
+- **Don't require the article's exact term to appear in the source.** A general statement in a source can cover a more specific case in the article without using the same words — "even if its event handler's code is asynchronous" already covers an `await` example. Requiring a literal keyword match produces findings that aren't real gaps.
 
 ## Never
 
@@ -150,6 +178,7 @@ Copy `verify/reports/_template.md` to `verify/reports/$slug-verify.md` and fill 
 - [ ] 検証可能なコード片: \_\_\_\_ 件
 - [ ] 判定不能とラベルした箇所: \_\_\_\_ 件 — 理由
 - [ ] バージョン差分の主張: \_\_\_\_ 件
+- [ ] 概念レベルの主張(Sourcesと照合すべきもの): \_\_\_\_ 件
 - [ ] Sourcesのリンク: \_\_\_\_ 件
 - [ ] gotchas: \_\_\_\_ 件
 
@@ -167,7 +196,9 @@ Copy `verify/reports/_template.md` to `verify/reports/$slug-verify.md` and fill 
 
 **層3 — Sources監査**
 
-- [ ] 監査したリンク: \_\_\_\_ / `## Sources`内の総数 \_\_\_\_
+- [ ] fetchしたリンク: \_\_\_\_ / `## Sources`内の総数 \_\_\_\_
+- [ ] 全source集合と照合した概念レベルの主張: \_\_\_\_ 件
+- [ ] 全sourceを確認した上で「どれにも該当なし」とした主張: \_\_\_\_ 件
 
 **層4 — gotcha**
 
