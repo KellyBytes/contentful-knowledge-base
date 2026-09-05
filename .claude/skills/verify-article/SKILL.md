@@ -85,7 +85,7 @@ If a code block's predicted output is ambiguous — no comment, no adjacent sent
 For each candidate from Step 0 that the category table allows:
 
 1. Extract the fenced code block **verbatim**. Never retype, "clean up", or convert it to `React.createElement` calls by hand — a hand-transcribed version verifies a different program than the one that's published.
-2. Write a script under `verify/` that mounts or calls it with the minimal wrapper needed, and nothing more. For React: jsdom, `createRoot`, `act()`, `dispatchEvent`. Set `global.IS_REACT_ACT_ENVIRONMENT = true`, and do not assign `global.navigator` — it is getter-only on current Node and will throw.
+2. Write a script under `verify/` that mounts or calls it with the minimal wrapper needed, and nothing more. For React: jsdom, `createRoot`, `act()`, `dispatchEvent`. Set `global.IS_REACT_ACT_ENVIRONMENT = true`, and do not assign `global.navigator` — it is getter-only on current Node and will throw. **The one exception is a batching measurement — see Known pitfalls before reaching for `act()` there.**
 3. Run it. Capture the actual output.
 4. If the claim is version-differential, run it under **both** `verify/package.json` (current) and the specific `verify/react-legacy-<N>/` identified in Pre-flight check 3, and report both. Testing a claim like this under one version only proves nothing about what the other version does — and if the code only exercises a React event handler, it won't distinguish the versions at all, since handlers always batched even before automatic batching existed. Test the specific location the claim is actually about (timeout, promise, native listener).
 5. Report each claim as: quoted claim → the script path and what it does → actual output → environment (version, runtime). No verdict.
@@ -125,7 +125,10 @@ For each entry in `gotchas[]`:
 - **A claim tested only inside a React event handler proves nothing about pre-batching behavior.** Handlers always batched, even before React 18. Test the exact location the claim names.
 - **A legacy install one major version off still runs without error** — it just silently fails to prove anything about the version the article actually names. Confirm the legacy version matches what the article claims before trusting a clean run.
 - **Writing the run's scripts from scratch is the point, not overhead.** Copying a previous run's script and editing it is how a subtly wrong setup propagates across articles.
-- When measuring whether updates batch, do not wrap the update in act(). From React 18 on, act() batches its contents itself, erasing the exact difference being measured. Use real timers and real awaits, and read the render log rather than a counter.
+- **`act()` erases the batching difference being measured.** From React 18 on,
+  `act()` batches its own contents, so a comparison wrapped in it reports
+  identical render counts on every version and proves nothing. Use real timers
+  and real awaits, and read the render log rather than a counter.
 
 ## Never
 
