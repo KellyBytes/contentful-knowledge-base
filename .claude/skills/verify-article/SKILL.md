@@ -125,6 +125,7 @@ For each entry in `gotchas[]`:
 - **A claim tested only inside a React event handler proves nothing about pre-batching behavior.** Handlers always batched, even before React 18. Test the exact location the claim names.
 - **A legacy install one major version off still runs without error** — it just silently fails to prove anything about the version the article actually names. Confirm the legacy version matches what the article claims before trusting a clean run.
 - **Writing the run's scripts from scratch is the point, not overhead.** Copying a previous run's script and editing it is how a subtly wrong setup propagates across articles.
+- When measuring whether updates batch, do not wrap the update in act(). From React 18 on, act() batches its contents itself, erasing the exact difference being measured. Use real timers and real awaits, and read the render log rather than a counter.
 
 ## Never
 
