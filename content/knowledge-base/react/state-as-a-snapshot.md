@@ -77,11 +77,10 @@ gotchas:
     fix: |-
       Do not read state after the await. Instead:
 
-      - capture what you need into a local variable before the await
       - use the updater form when the new value depends on the previous one
-      - keep it in a ref when a callback genuinely needs the live value
+      - keep it in a ref when a callback genuinely needs a value that is always current, not the one from the render that started the click
 
-      Adding the await did not move the handler to a newer render.
+      Capturing the value into a local variable before the await does not help — the value is fixed for this render whether you read it before or after the await. Adding the await did not move the handler to a newer render.
     category: React
     tag:
       - rendering
@@ -279,13 +278,13 @@ Compute the value once, into a local variable, then use that local for both the 
 
 ## Side-by-side
 
-| You want                            | Reach for                        |
-| ----------------------------------- | -------------------------------- |
-| A value that depends on the old one | the updater form, `setX(x => …)` |
-| The new value later in this handler | a local variable you computed    |
-| To act once the new value is on screen | an effect keyed on that state  |
-| A live value a timer can read       | a ref, not state                 |
-| To read state right after setting it | nothing — it cannot be done      |
+| You want                               | Reach for                        |
+| -------------------------------------- | -------------------------------- |
+| A value that depends on the old one    | the updater form, `setX(x => …)` |
+| The new value later in this handler    | a local variable you computed    |
+| To act once the new value is on screen | an effect keyed on that state    |
+| A live value a timer can read          | a ref, not state                 |
+| To read state right after setting it   | nothing — it cannot be done      |
 
 ## The rule of thumb
 
