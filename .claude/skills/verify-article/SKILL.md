@@ -67,6 +67,16 @@ verify/
 
 `verify/package.json` and `verify/.gitignore` are tracked in GitHub (English, part of the KB's tooling). Everything else under `verify/` — scripts, legacy installs, per-article reports — is gitignored. Never create a `react-legacy-<N>/` on the spot without the approval called for in Pre-flight check 3; once one exists, reuse it rather than reinstalling.
 
+**Reaching outside `verify/` for a package.** Prefer what is pinned in
+`verify/package.json`. Installing anything new needs approval, same as a legacy
+React install. Reading a package that already exists elsewhere in the repo — the
+app's own `node_modules`, say — is not an install and is allowed, but it makes
+that one measurement unreproducible from `verify/` alone, so name the package and
+version, say where it came from, and flag the measurement as not reproducible
+from the sandbox. **If a pinned tool refuses to do what the claim needs, record
+the refusal verbatim** and treat it as a result; do not quietly substitute
+another tool and present only the substitute's output.
+
 ## Re-running a slug
 
 If `verify/reports/$slug-verify.md` already exists, this run appends a new dated
@@ -98,8 +108,11 @@ Before running anything, list every candidate claim in the report:
   even though no code block accompanies them, and they are easy to miss precisely
   because there is nothing fenced to extract. List them with the field and line
   they came from, and carry them into Layer 1 alongside the code blocks.
-- Concept-level claims that would need a citation to back them — a term introduced and bolded for the first time, a mechanism stated in a gotcha's `cause`, a claim about _why_ something behaves the way it does. List these as their own set, separate from the URLs below. Layer 3 checks this set against that one as two independent lists, not as pairs matched by position.
-- Every URL under `## Sources`
+- Concept-level claims that would need a citation to back them — a term introduced and bolded for the first time, a mechanism stated in a gotcha's `cause`, a claim about _why_ something behaves the way it does. List these as their own set, separate from the entries below. Layer 3 checks this set against that one as two independent lists, not as pairs matched by position.
+- **Every entry under `## Sources`, whether or not it carries a URL.** An entry
+  written as bare text with no link has no fetch target; count it as an entry,
+  record that it cannot be fetched, and carry it to Layer 3 as a link-level
+  finding. Counting only the URLs silently drops it from the report.
 - Every entry in `gotchas[]`
 
 If a code block's predicted output is ambiguous — no comment, no adjacent sentence — list it as "判定不能" (not checkable) rather than guessing what it's supposed to prove.
@@ -109,11 +122,19 @@ If a code block's predicted output is ambiguous — no comment, no adjacent sent
 For each candidate from Step 0 that the category table allows:
 
 1. Extract the fenced code block **verbatim**. Never retype, "clean up", or convert it to `React.createElement` calls by hand — a hand-transcribed version verifies a different program than the one that's published.
-2. Write a script under `verify/` that mounts or calls it with the minimal wrapper needed, and nothing more. For React: jsdom, `createRoot`, `act()`, `dispatchEvent`. Set `global.IS_REACT_ACT_ENVIRONMENT = true`, and do not assign `global.navigator` — it is getter-only on current Node and will throw. **The one exception is a batching measurement — see Known pitfalls before reaching for `act()` there.**
-3. Run it. Capture the actual output.
-4. **If the claim is negative — "X has no effect", "this does not help", "the value does not change" — pair it with a positive control in the same script.** A null result is what a broken measurement produces too, so a measurement that can only ever return "no difference" proves nothing on its own. Add a case the same harness should show a difference on, and report it next to the main result. See Known pitfalls.
-5. If the claim is version-differential, run it under **both** `verify/package.json` (current) and the specific `verify/react-legacy-<N>/` identified in Pre-flight check 3, and report both. Testing a claim like this under one version only proves nothing about what the other version does — and if the code only exercises a React event handler, it won't distinguish the versions at all, since handlers always batched even before automatic batching existed. Test the specific location the claim is actually about (timeout, promise, native listener), and test **every** location the claim names, not a representative subset.
-6. Report each claim as: quoted claim → the script path and what it does → actual output → environment (version, runtime). No verdict.
+2. **If the block does not run as published, subdivide by selection, never by
+   rewriting.** An article may deliberately put two `SyntaxError` cases in one
+   block, which makes the whole block fail at parse time and prove nothing about
+   the other lines. Run the published block as one program first and record what
+   happens — that is a result about the article as published. Then split it into
+   the smallest fragments that let each claim be observed, taking whole lines from
+   the article and changing none of them, and report the fragment results
+   alongside the whole-block result. Say which lines each fragment is.
+3. Write a script under `verify/` that mounts or calls it with the minimal wrapper needed, and nothing more. For React: jsdom, `createRoot`, `act()`, `dispatchEvent`. Set `global.IS_REACT_ACT_ENVIRONMENT = true`, and do not assign `global.navigator` — it is getter-only on current Node and will throw. **The one exception is a batching measurement — see Known pitfalls before reaching for `act()` there.** Any line added to make the snippet observable — a call the article never makes, a read-back of a value the article only writes — is an addition; name each one.
+4. Run it. Capture the actual output.
+5. **If the claim is negative — "X has no effect", "this does not help", "the value does not change" — pair it with a positive control in the same script.** A null result is what a broken measurement produces too, so a measurement that can only ever return "no difference" proves nothing on its own. Add a case the same harness should show a difference on, and report it next to the main result. **If the control does not behave as expected, stop and rebuild the harness before comparing anything to the article** — a misbehaving control means the measurement is not yet readable, whether its numbers agree with the article or not. See Known pitfalls.
+6. If the claim is differential — across versions, across modes (sloppy/strict), or across execution contexts (classic script / ES module) — run **every** configuration the claim names, and report each. For versions, use the specific `verify/react-legacy-<N>/` identified in Pre-flight check 3; testing under one version only proves nothing about the other, and if the code only exercises a React event handler it won't distinguish the versions at all, since handlers always batched even before automatic batching existed. Test the specific location the claim is actually about (timeout, promise, native listener), and test every location it names, not a representative subset.
+7. Report each claim as: quoted claim → the script path and what it does → actual output → environment (version, runtime). No verdict.
 
 ### Step 2 — Version claims vs. primary sources (Layer 2)
 
@@ -129,6 +150,12 @@ For every version-scoped claim Step 1 couldn't test directly (most can't — a c
    more. Where Layer 1 can run the same code on the named version, pair the
    absence with that measurement — a direct run on the version in question is
    stronger than any amount of silence in a changelog.
+5. **If a fetch returns only navigation — a table of contents, a section index,
+   a cover page — say so and stop there.** Multipage specifications on tc39.es and
+   ecma-international.org routinely come back this way. That a section heading
+   exists in an edition is evidence about the heading, not about what the section
+   normatively says; do not let the heading stand in for the text. Report which
+   URL, what came back, and what consequently could not be checked.
 
 Lay the two texts side by side. Do not write "確認済み" or "矛盾" — that's Kelly's call.
 
@@ -141,7 +168,8 @@ list or in the article's text — check each claim against the whole set.
 1. Fetch every URL under `## Sources` first, before checking any individual
    claim. You need the full set in hand — checking one claim against one
    source at a time, in list order, is how a claim that's genuinely covered
-   by the third or fourth source ends up reported as unsupported.
+   by the third or fourth source ends up reported as unsupported. An entry with
+   no URL has no fetch target; record it in the fetch table as such.
 2. For each concept-level claim from Step 0, search across **all** fetched
    sources — not just whichever one is positionally closest in the article —
    for a passage that supports it.
@@ -157,7 +185,7 @@ list or in the article's text — check each claim against the whole set.
      right; that is not the point. The point is that it is asserting more than
      its citations carry, and Kelly needs to see that to decide whether to
      soften the sentence, add a source, or leave it as is.
-   - **該当なし** — no source covers it, even loosely.
+   - **該当なし** — no source in `## Sources` covers it, even loosely.
 
    **Do not let 一部カバー collapse into 全面カバー.** Finding a related passage
    is not the same as finding one that carries the whole claim; if you catch
@@ -168,36 +196,59 @@ list or in the article's text — check each claim against the whole set.
    fully covered and only the vocabulary differs. Say which of the two it is in
    one line, and say specifically what the sources stop short of.
 
-4. Quote the supporting passage(s) next to the article's claim. If two or
+4. **Sub-label every 該当なし as one of two, because they call for different
+   things:**
+   - **該当なし(一次資料あり)** — nothing in `## Sources` covers it, but a
+     primary source fetched during Layer 2, or an obvious sibling page of one of
+     the existing sources, does. Name the URL. This is the cheap case: the claim
+     is backed, the citation list just doesn't reflect it, and the fix is one
+     line in `## Sources`.
+   - **該当なし(一次資料なし)** — nothing found anywhere. This may still be
+     fine — the article may be pointing at another KB article instead, or the
+     claim may rest on the Layer 1 measurement rather than on literature. Say
+     which, so the distinction between "uncited" and "unsupported" stays visible.
+
+   Rolling both into one count hides the three-out-of-five case where adding a
+   URL would have settled it.
+
+5. Quote the supporting passage(s) next to the article's claim. If two or
    more sources each cover part of the same claim, show all of them — that's
    the normal shape for a claim like "batching," not a discrepancy to explain
    away.
-5. Only report a claim as 該当なし once it has been checked against every
+6. **If the sources disagree with each other on a claim, that is the finding.**
+   Say which source takes which side and quote both. A claim the article states
+   flatly while its own citations split on the terminology is 一部カバー, and the
+   split is the part Kelly needs to see — do not pick the side that matches the
+   article and quote only that one.
+7. Only report a claim as 該当なし once it has been checked against every
    fetched source and none of them cover it, even loosely. A claim not
    covered by the nearest source but covered by another one in the list is
    not 該当なし.
-6. A fetch failure, a dead link, or a page that no longer says anything like
-   any claim it might once have supported is itself a finding — report it,
-   don't silently skip it.
+8. A fetch failure, a dead link, an entry with no URL, or a page that no longer
+   says anything like any claim it might once have supported is itself a finding
+   — report it, don't silently skip it.
 
 ### Step 4 — Gotcha fix verification (Layer 4)
 
 For each entry in `gotchas[]`:
 
 1. From `symptom` + `cause`, write the minimal "before" snippet expected to reproduce the symptom. **This is one of two places this skill writes code that isn't lifted verbatim from the article** — say so plainly in the report and show the snippet in full, since Kelly needs to check this code is a fair reproduction, not just the result.
-2. Run it. Confirm what actually happens.
+2. Run it. Confirm what actually happens. If the gotcha carries an `errorMessage`, compare the message the run actually produced against it and show both.
 3. Apply exactly the change described in `fix`. Run that.
 4. **If `fix` offers several options, apply each one separately and report each.**
    A fix with three bullets is three "after" runs, not one — the reader is being
    told any of them solves the problem, and a bullet that doesn't is invisible
    until it is run on its own. Say which bullet each "after" snippet implements.
-   If an option genuinely cannot be applied to this particular before-snippet,
-   say that instead of silently dropping it.
-5. **Label the "after" code's provenance as carefully as the "before" code's.**
-   An "after" is frequently newly written even when the "before" came verbatim
-   from the article — a fix stated in prose has no snippet to lift, and stitching
-   two article slices together is still assembly. Show it in full whenever it is
-   not a single verbatim slice, and say which lines came from where.
+   A bullet that amounts to "change nothing" is still an option: run the
+   before-code and show what the keyword is doing on its own. If an option
+   genuinely cannot be applied to this particular before-snippet, say that
+   instead of silently dropping it.
+5. **Label the "after" code's provenance as carefully as the "before" code's**,
+   using three labels: lifted verbatim from the article (say which lines),
+   assembled from article lines (reordered, or one token replaced — say which
+   lines and what changed), or newly written. An "after" is frequently assembled
+   or new even when the "before" came verbatim, since a fix stated in prose has
+   no snippet to lift. Show it in full whenever it is not a single verbatim slice.
 6. Report all of it: the "before" snippet, its actual behavior, each "after" snippet, its actual behavior.
 
 ## Known pitfalls (from prior runs — do not repeat these)
@@ -217,10 +268,26 @@ For each entry in `gotchas[]`:
   approach does not help" by measuring it and getting no difference proves
   nothing on its own, because a harness that cannot detect any difference returns
   exactly that. Every negative claim needs a positive control in the same run —
-  a case the harness _should_ show a difference on. Verifying "capturing into a
-  local before the await doesn't help" meant also running a ref-based version and
-  seeing it come back with the newer value; without that second row, the first
-  row was unreadable. The control row in a version comparison does the same job.
+  a case the harness _should_ show a difference on.
+- **The control is the first thing to read, before the result.** When a control
+  comes back wrong — slower than the subject, showing no difference where it must
+  show one — the measurement is unreadable and the harness is the suspect, not
+  the article. Do not compare the numbers to the article first and reason from
+  there; rebuild, then read. A performance run once had its control (five times
+  the arithmetic) come back _faster_ than the subject, which was the signal that
+  the harness was wrong, independent of the fact that the numbers also happened
+  to contradict the article.
+- **`vm.runInContext` does not measure the language.** Inside a `vm` sandbox,
+  top-level `var` becomes a property on the context's global proxy, so every read
+  goes through the proxy, while `let`/`const` stay lexical and don't. A
+  `var`-vs-`let` comparison run that way measures the sandbox. Compile the bodies
+  into real functions (`new Function`) so all three sit in the same function
+  scope, or run them as real scripts.
+- **A spec fetch that returns a table of contents has not returned the spec.**
+  tc39.es and 262.ecma-international.org multipage documents commonly come back
+  as navigation only. A section heading existing in an edition says nothing about
+  what the section normatively requires — say what came back and what therefore
+  could not be checked.
 - **"Covered by a source" is not a two-way switch.** After the audit was widened
   to check every source, the pressure moved the other way: a claim with a loosely
   related passage somewhere in the set gets waved through as covered, and the
@@ -242,10 +309,11 @@ For each entry in `gotchas[]`:
 - Run `npm run article:push`, touch Contentful, or open a PR.
 - Commit, or ask to commit, the `.mjs` scripts written during a run. They are scratch.
 - Create a shared helper module under `verify/` without proposing it first and being told to. See the Environment section for why.
-- Install a `verify/react-legacy-<N>/` without asking first and naming the version, or reinstall one that already exists.
+- Install a `verify/react-legacy-<N>/` without asking first and naming the version, or reinstall one that already exists. Install anything else without asking either.
 - Overwrite a previous report for the same slug. If one exists at `verify/reports/$slug-verify.md`, append a dated run below it instead, or ask.
 - Treat a Layer 1 mismatch as settled without the Known-pitfalls re-check.
 - Report a negative claim as measured without a positive control alongside it.
+- Present a section heading, a page title, or a table of contents entry as evidence about the text under it.
 
 ## Report when done
 
@@ -256,38 +324,44 @@ Copy `verify/reports/_template.md` to `verify/reports/$slug-verify.md` and fill 
 - [ ] 検証可能なコード片: \_\_\_\_ 件
 - [ ] frontmatterのフィールド内にあった検証可能な主張: \_\_\_\_ 件
 - [ ] 判定不能とラベルした箇所: \_\_\_\_ 件 — 理由
-- [ ] バージョン差分の主張: \_\_\_\_ 件
+- [ ] 差分の主張(バージョン/モード/実行文脈): \_\_\_\_ 件
 - [ ] 概念レベルの主張(Sourcesと照合すべきもの): \_\_\_\_ 件
-- [ ] Sourcesのリンク: \_\_\_\_ 件
+- [ ] `## Sources`のエントリ: \_\_\_\_ 件(うちURLなし \_\_\_\_ 件)
 - [ ] gotchas: \_\_\_\_ 件
 
 **層1 — 実行**
 
 - [ ] 実行した件数 / 対象外だった件数(カテゴリ理由): \_\_\_\_ / \_\_\_\_
-- [ ] 複数バージョンで実行した件数、使ったバージョン: \_\_\_\_ / \_\_\_\_
+- [ ] 上の内訳とStep 0の突き合わせ(層4で扱った件数、1スクリプトにまとめた件数): \_\_\_\_
+- [ ] 公開されている形のままでは走らなかったコードブロック: \_\_\_\_ 件
+- [ ] 複数構成で実行した件数と、その構成(バージョン/モード/実行文脈): \_\_\_\_ / \_\_\_\_
 - [ ] 否定形の主張と、それに対照を置いた件数: \_\_\_\_ / \_\_\_\_
 - [ ] Known pitfallsの再チェックを行った件数: \_\_\_\_
+- [ ] `verify/`外のパッケージを使った件数(再現不可としてフラグ): \_\_\_\_
 - [ ] 書いたスクリプト(`verify/*.mjs`、コミットしない): \_\_\_\_ 件
 
 **層2 — 一次資料**
 
 - [ ] fetchしたURL: \_\_\_\_ 件
+- [ ] 目次/ナビゲーションしか取得できなかったURL: \_\_\_\_ 件
 - [ ] 「記載が無いこと」を根拠にした主張(消極的証拠として明示): \_\_\_\_ 件
 - [ ] fetch失敗/内容不一致で要フラグにした件数: \_\_\_\_
 
 **層3 — Sources監査**
 
-- [ ] fetchしたリンク: \_\_\_\_ / `## Sources`内の総数 \_\_\_\_
+- [ ] fetchしたリンク: \_\_\_\_ / `## Sources`のエントリ総数 \_\_\_\_
 - [ ] 全source集合と照合した概念レベルの主張: \_\_\_\_ 件
 - [ ] 全面カバー \_\_\_\_ 件 / 一部カバー \_\_\_\_ 件 / 該当なし \_\_\_\_ 件
+- [ ] 該当なしの内訳: 一次資料あり(Sourcesに追加すれば済む) \_\_\_\_ 件 / 一次資料なし \_\_\_\_ 件
+- [ ] source同士が食い違っていた主張: \_\_\_\_ 件
 - [ ] 一部カバーとした主張(記事がsourceより踏み込んでいる箇所)を、行番号つきで列挙
 
 **層4 — gotcha**
 
 - [ ] 検証したgotcha: \_\_\_\_ / 総数 \_\_\_\_
 - [ ] `fix`の選択肢を個別に適用した件数: \_\_\_\_ / 選択肢の総数 \_\_\_\_
-- [ ] 「before」コードを新規に書いた件数(記事からの抜粋ではない): \_\_\_\_
-- [ ] 「after」コードを新規に書いた/継ぎ合わせた件数: \_\_\_\_
+- [ ] 「before」コードの出所内訳(抜粋 / 継ぎ合わせ / 新規): \_\_\_\_
+- [ ] 「after」コードの出所内訳(抜粋 / 継ぎ合わせ / 新規): \_\_\_\_
 
 ## Then
 
