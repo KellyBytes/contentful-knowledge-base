@@ -3,7 +3,7 @@ description: Verify the technical claims in a published knowledge-base article �
 argument-hint: [slug]
 arguments: slug
 disable-model-invocation: true
-allowed-tools: Read Glob Grep WebFetch WebSearch Bash(node:*) Bash(cd verify && *) Bash(ls verify:*) Write(verify/reports/*) Write(verify/*.mjs)
+allowed-tools: Read Glob Grep WebFetch WebSearch Bash(node:*) Bash(cd verify && *) Bash(ls verify:*) Write(verify/reports/*) Write(verify/scripts/**)
 ---
 
 Verify `content/knowledge-base/**/$slug.md` against four layers of evidence. Report only — this command never edits an article and never touches Contentful.
@@ -54,16 +54,24 @@ Reuse one shared sandbox at the repo root. Do not create a fresh npm project per
 ```
 verify/
   package.json                # react, react-dom, jsdom pinned to CURRENT (React 19)
-  .gitignore                   # node_modules/, react-legacy-*/, *.mjs, reports/* except _template.md
+  .gitignore                   # node_modules/, react-legacy-*/, scripts/, reports/* except _template.md
   react-legacy-18/              # installed on demand, kept once installed
   react-legacy-17/              # installed on demand, only when an article
                                  # actually compares against 17 (e.g. state-as-a-snapshot)
+  scripts/
+    <slug>/                     # gitignored — this run's throwaway .mjs files,
+                                 # one folder per article so the whole folder
+                                 # can be deleted by name
   reports/
     _template.md                # tracked — the report shape
     <slug>-verify.md            # gitignored — per-article results, Japanese
 ```
 
-**Execution scripts are written fresh for each run, dropped in `verify/` as `.mjs` files, and never committed.** There is deliberately no shared harness: too few articles have been verified so far to know which parts are actually common, and a wrong abstraction here would shape every future run around it. Write what this article needs, name the files after the claim they test (e.g. `state-snapshot-main-example.mjs`), and let them be thrown away. If the same setup turns up in three or four runs unchanged, that is the moment to propose extracting it — not before.
+**Execution scripts are written fresh for each run, dropped in `verify/scripts/$slug/` as `.mjs` files, and never committed.** Nothing is written to `verify/` itself — that directory holds tracked configuration, and a run that scatters scratch files next to `package.json` makes cleanup a file-selection problem instead of a folder deletion. Create `verify/scripts/$slug/` if it does not exist; creating a scratch directory is not an environment change and needs no approval, unlike an `npm install`.
+
+If the folder already exists from an earlier run of this slug, list what is in it before writing and say so in the report. **Do not read or reuse those files** — see Known pitfalls on copying a previous run's script. Write this run's scripts under names that make the collision visible rather than silently overwriting, or say plainly which files this run replaced.
+
+There is deliberately no shared harness: too few articles have been verified so far to know which parts are actually common, and a wrong abstraction here would shape every future run around it. Write what this article needs, name the files after the claim they test (e.g. `main-example.mjs`), and let them be thrown away. If the same setup turns up in three or four runs unchanged, that is the moment to propose extracting it — not before.
 
 `verify/package.json` and `verify/.gitignore` are tracked in GitHub (English, part of the KB's tooling). Everything else under `verify/` — scripts, legacy installs, per-article reports — is gitignored. Never create a `react-legacy-<N>/` on the spot without the approval called for in Pre-flight check 3; once one exists, reuse it rather than reinstalling.
 
@@ -314,6 +322,7 @@ For each entry in `gotchas[]`:
 - Treat a Layer 1 mismatch as settled without the Known-pitfalls re-check.
 - Report a negative claim as measured without a positive control alongside it.
 - Present a section heading, a page title, or a table of contents entry as evidence about the text under it.
+- Write scratch scripts anywhere other than `verify/scripts/$slug/`, or delete them yourself.
 
 ## Report when done
 
@@ -365,4 +374,10 @@ Copy `verify/reports/_template.md` to `verify/reports/$slug-verify.md` and fill 
 
 ## Then
 
-Tell Kelly the report path and stop. Reading it, judging each claim, and deciding whether to edit the article are all her call — not part of this command.
+Tell Kelly the report path, then give her the one line that removes this run's scratch files:
+
+```bash
+rm -rf verify/scripts/$slug/
+```
+
+Print it as a literal command scoped to that one folder. Never offer a glob such as `verify/\*.mjs`, and never run the deletion yourself — the files are hers to keep for as long as she wants to look at them, and a wildcard beside tracked configuration is exactly the hazard the per-slug folder exists to remove. Then stop: reading the report, judging each claim, and deciding whether to edit the article are all her call — not part of this command.
