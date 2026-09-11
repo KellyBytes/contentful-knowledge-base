@@ -109,7 +109,7 @@ interviewQuestions:
       No, and it never will be. The committee that maintains JavaScript treats
       backward compatibility as close to inviolable — removing `var` would break
       a large share of the existing web, so it stays in the specification
-      permanently. "Deprecated" and "you shouldn't use it" are different claims.
+      for the foreseeable future. "Deprecated" and "you shouldn't use it" are different claims.
       `var` is fully supported and behaves exactly as specified; it is simply
       the wrong tool now that block scoping exists. Linters flag it by
       convention, not because the language discourages it.
@@ -135,7 +135,7 @@ for (var i = 0; i < 3; i++) {
 
 Most people expect `0 1 2`. You get `3 3 3`. Change one word — `var` to `let` — and it prints `0 1 2`. Nothing else in the code moves.
 
-That one word decides **how many variables exist**, **how long each one lives**, and **what happens if you read one too early**. Those are the only three differences, and everything else follows from them.
+That one word decides **how many variables exist**, **how long each one lives**, and **what happens if you read one too early**. Those three account for nearly everything you will hit in everyday code, and most of what follows falls out of them. One more — what the declaration does to the global object — comes up at the end.
 
 ## Difference 1: scope
 
@@ -178,12 +178,14 @@ The dangerous one is `var`. Declaring the same name twice is usually a copy-past
 
 ## Difference 3: hoisting and the temporal dead zone
 
-All three declarations are **hoisted** — the engine registers the name at the top of its scope before running any code. What differs is the state of that binding before the declaration line executes.
+All three declarations are **hoisted** in the sense used here — the engine registers the name at the top of its scope before running any code. What differs is the state of that binding before the declaration line executes.
 
 - `var` → the binding exists and already holds `undefined`
 - `let` / `const` → the binding exists but is **locked**. Touching it throws a `ReferenceError`
 
 That locked window is the **Temporal Dead Zone (TDZ)**.
+
+**A note on the word.** The specification never defines _hoisting_, and usage splits. Many sources — including MDN's own `let` and `const` pages — reserve it for names you can read before their declaration line, which makes `let` and `const` non-hoisted. This article uses it for the registration step alone: the binding is created when the scope is entered, whichever keyword declared it. Nothing above changes either way; only the label does.
 
 ```text
         scope starts            declaration line          scope ends
@@ -323,4 +325,7 @@ config = { debug: false };
 
 - MDN Web Docs — [`var`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/var), [`let`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let), [`const`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const)
 - MDN Web Docs — [Hoisting](https://developer.mozilla.org/en-US/docs/Glossary/Hoisting)
-- ECMAScript Language Specification — Declarations and the Variable Statement
+- ECMAScript Language Specification — [Declarations and the Variable Statement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#sec-declarations-and-the-variable-statement)
+- MDN Web Docs — [Modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules)
+- TC39 — [FAQ](https://github.com/tc39/faq)
+- MDN Web Docs — [Object.freeze()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze)
