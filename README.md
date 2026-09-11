@@ -14,6 +14,11 @@ Rather than a static blog, this project treats content as **modeled data**. Each
 Contentful model, its own rendering pipeline, and its own routing strategy — while sharing a single design
 system, search index, and draft preview workflow.
 
+Growing the knowledge base is itself treated as an engineering problem. Topic selection, drafting,
+structural validation, technical verification, and committing are each handled by a Claude Code skill
+working against version-controlled contracts, so the site can be extended without the article count
+degrading into a pile of inconsistent prose.
+
 The reference material available for this stack targeted Next.js 13 with the Pages Router and was roughly
 three years out of date across Next.js, Contentful, and Tailwind. Rather than pinning old versions to make
 it work, I built on the App Router from the start — identifying what each Pages Router pattern was actually
@@ -54,6 +59,14 @@ doing, then implementing the current equivalent.
 - Latest articles carousel
 - Sorting logic isolated in a dedicated module
 - URL/category mismatch returns 404, preventing the same article from resolving under multiple paths
+
+### Authoring Workflow
+
+- Topic proposals checked against a version-controlled ownership map, so concepts are not covered twice
+- Drafting against a written template contract, with the drafting skill reporting its own measurements
+- Structural validation and a field-level diff before anything reaches the CMS
+- Technical verification that executes an article's code and audits its citations
+- Commit splitting and message authoring as a separate, explicit step
 
 ### Draft Preview
 
@@ -102,6 +115,13 @@ doing, then implementing the current equivalent.
 - Contentful Management API (`contentful-management`)
 - `gray-matter` for front matter
 - Claude Code — custom skills and layered instruction files
+
+### Verification Sandbox
+
+- jsdom for DOM-dependent execution
+- esbuild for JSX and TypeScript transforms
+- Pinned legacy React installs for version-differential claims
+- Isolated from the application's dependency tree
 
 ### UI
 
@@ -174,9 +194,23 @@ Gotchas and interview questions are separate entries rather than body content, b
 
 <br />
 
-## How Articles Get Written
+## How Articles Get Written and Checked
 
-Knowledge base articles are produced by a repeatable pipeline rather than written ad hoc. The goal is consistency as the article count grows: the same structure, the same front matter, and the same standard for what qualifies as a reusable "gotcha," so the CMS stays queryable instead of becoming a pile of prose.
+Knowledge base articles are produced by a repeatable workflow rather than written ad hoc. The goal is consistency as the article count grows: the same structure, the same front matter, and the same standard for what qualifies as a reusable "gotcha," so the CMS stays queryable instead of becoming a pile of prose.
+
+Each stage is a separate Claude Code skill or script, and each one ends by handing a decision back:
+
+```
+topic          →  draft         →  structural     →  technical      →  commit
+selection         generation       validation        verification
+
+/article-ideas    /new-article     article-push      /verify-article   /commit
+                                   --dry-run
+proposes topics   drafts against   field limits,     executes code,    splits the work,
+against the       the template     link integrity,   audits citations, writes messages
+ownership map     contract         shared-entry      reproduces
+                                   consistency       gotcha symptoms
+```
 
 ```
 content/_reference/            → the contracts the pipeline writes against
@@ -193,12 +227,22 @@ content/CLAUDE.md              → how the body is written: opening, length,
 .claude/skills/
 ├── article-ideas/               proposes topics against topic-ownership.md
 ├── new-article/                 drafts against the template and the idea run
+├── verify-article/              executes an article's claims; never edits it
 └── commit/                      splits the work into commits and writes messages
 
 scripts/
 ├── article-push.mjs             validates, reports a diff, syncs to Contentful
 ├── article-pull.mjs             pulls resolved entries back into markdown
 └── export-content-model.mjs     regenerates the reference JSON from Contentful
+
+verify/                        → verification sandbox, isolated from the app
+├── package.json                 current React, react-dom, jsdom (tracked)
+├── react-legacy-17/             installed on demand for version comparisons
+├── react-legacy-18/
+├── scripts/<slug>/              throwaway .mjs files, one folder per article
+└── reports/
+    ├── _template.md             the report shape (tracked)
+    └── <slug>-verify.md         measurements, in Japanese (gitignored)
 ```
 
 ### Design decisions
@@ -217,11 +261,34 @@ scripts/
 
 - **Gotchas are shared entries, not body text.** A pitfall such as "loop callbacks all print the same final number" is referenced by both the `var-let-const` and `closures-explained` articles rather than duplicated into each. That sharing is the reason for the consistency check above: writing one entry changes every article that links it.
 
-### What the pipeline does not decide
+### Verifying technical claims
 
-It does not decide whether an article is correct. The checks are structural — field limits, link integrity, consistency between copies of a shared entry — and a draft can satisfy every one of them and still describe a behavior that does not happen.
+The structural checks cannot tell whether an article is true. A draft can satisfy every field limit and link constraint and still describe a behavior that does not happen. `/verify-article` answers that question by measurement, across four layers:
 
-Technical claims need a separate check: running the code an article contains, and confirming version-specific statements against primary sources. That step sits deliberately outside the generated pipeline — a draft cannot be trusted to audit itself, and executing a snippet produces an answer that does not depend on anyone's judgment. Automating the executable half of that check is the next piece of work.
+| Layer | What it checks                                      | How                                                                                                       |
+| ----- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **1** | Code blocks that state an expected output           | Extracts the block verbatim and runs it — jsdom + `react-dom/client` for React, plain Node for JavaScript |
+| **2** | Version-specific claims                             | Fetches the primary source — spec text, release notes, MDN — and quotes it beneath the claim              |
+| **3** | Whether `## Sources` supports what the article says | Fetches every entry, then matches each concept-level claim against the whole set                          |
+| **4** | Whether a gotcha's `fix` removes its `symptom`      | Reproduces the symptom, applies each fix option separately, and runs both                                 |
+
+The constraint that shapes all of it: **the report contains no verdicts.** Words like "correct", "confirmed", and "mismatch" are prohibited, along with ✅ and ❌. Each entry is the article's claim, the measurement or quotation beside it, and the environment it was produced in. Deciding whether the article needs an edit is a human step, and a skill that pre-judges its own findings makes that step harder rather than easier — a green check invites agreement, while a claim next to a number invites reading.
+
+- **A null result and a broken harness produce the same output.** Verifying a claim that something _has no effect_ yields "no difference" — which is also what a measurement that cannot detect anything yields. Every negative claim is now run with a positive control beside it, and when the control misbehaves the harness is rebuilt before the numbers are compared to the article at all. On one performance run the control — five times the arithmetic — came back _faster_ than the subject, which was the signal that the sandbox was measuring its own global proxy rather than the language.
+
+- **Sources are a reading list, not footnotes.** The first version of the audit checked each claim against the source nearest it and reported two claims as uncited that the third and fourth entries covered plainly. Matching every claim against the entire set fixed that, and introduced the opposite failure: a loosely related passage anywhere in the set waves a claim through. Coverage is now three-valued — fully covered, partially covered (the article asserts more than its citations carry), or uncovered — with the partial cases listed separately, because those are the ones worth reading.
+
+- **Each run writes its own scripts and throws them away.** There is deliberately no shared harness. Copying a previous run's setup is how a subtly wrong measurement propagates across articles, so every run writes fresh `.mjs` files under `verify/scripts/<slug>/`, names them after the claim they test, and reports the paths.
+
+- **The skill cannot edit what it verifies.** Write access is scoped to `verify/reports/` and `verify/scripts/`; `content/knowledge-base/` is read-only to it, and it has no path to Contentful at all.
+
+Its first runs found one substantive error: a gotcha whose `fix` offered "capture the value into a local variable before the await" as a remedy. Measurement showed it changes nothing, because the value is fixed for that render whether it is read before or after the await — adding the `await` never moved the handler into a newer render. Every other finding was a citation gap or a claim stated more strongly than its sources support, which is a different class of problem and a much cheaper one.
+
+### What stays a human decision
+
+Nothing in the repository publishes an article, and nothing in it concludes that an article is right. The push script reports a diff and stops. The verification skill reports measurements and stops. Both are built to hand a decision back rather than make one.
+
+That is a deliberate cost in speed. A fully automatic pipeline would be shorter to describe and faster to run, and it would also be the kind of system that rewrites a shared entry two articles depend on because a near match looked close enough. Both guards have now earned their keep on real runs — one on a consistency check that caught two genuine mismatches, one on a `fix` bullet that read plausibly and did nothing.
 
 <br />
 
@@ -303,6 +370,23 @@ collects every article that links the same id and compares the copies; if any
 disagree, it aborts and names the files. Which copy is correct is a human
 decision, and a script that guesses at one is worse than a script that stops.
 
+### 7. A Measurement Is Only Readable Next to a Control
+
+The verification skill's hardest cases are the claims that say something _does not_ happen. "Capturing the
+value before the `await` does not help" and "there is no performance difference between the three keywords"
+are both confirmed by an absence — and an absence is indistinguishable from a measurement that was never
+capable of detecting anything.
+
+Two runs made that concrete. A performance comparison inside a `vm` sandbox reported `var` as three times
+slower than `let`, which contradicted the article; the reason to distrust it was not the contradiction but
+the control, which did five times the arithmetic and still came back faster. The sandbox turns a top-level
+`var` into a property on the context's global proxy, so every read went through the proxy while `let` stayed
+lexical. It was measuring the sandbox. Compiling the bodies into real functions removed the difference.
+
+The rule that came out of it is about ordering: read the control before the result. A control that misbehaves
+means the harness is the suspect, whether its numbers agree with the article or not — and reasoning from a
+result whose control is broken is how a wrong conclusion gets written down confidently.
+
 <br />
 
 ## Getting Started
@@ -349,7 +433,8 @@ Deployed to **Vercel** with:
 - RSS feed and sitemap generation
 - Table of contents and reading progress indicator
 - Full-text search backed by a dedicated index rather than a static payload
-- Automated verification of code blocks in knowledge base articles
+- Verification coverage for categories with no execution path, such as CSS, where only the citation and source layers apply
+- A scheduled re-verification pass, so published articles are re-measured when the versions they document move on
 
 <br />
 
@@ -364,6 +449,7 @@ Kelly's Notes demonstrates my ability to:
 - Separate data access, domain logic, and presentation into maintainable layers
 - Ship and maintain a live application that grows over time
 - Design an AI-assisted authoring pipeline that refuses to write when its inputs disagree, so generated output is reviewable and shared data cannot be silently overwritten
+- Treat published content as testable — executing what an article claims, auditing what its citations support, and keeping the judgment separate from the measurement
 
 It also serves a practical purpose: it is where I document what I learn, which means it is continuously used, maintained, and extended rather than finished and archived.
 
