@@ -44,9 +44,7 @@ gotchas:
       holds the variables from the first render. It reads the same initial value
       forever, no matter how many times the state has changed since.
     fix: >-
-      Use the updater form — `setCount(prev => prev + 1)` — so the callback
-      never reads the stale value at all. If the callback genuinely needs the
-      current value, add it to the dependency array so the closure is rebuilt.
+      Use the updater form — `setCount(prev => prev + 1)` — so the callback never reads the stale value at all. This is almost always the better fix for a `setInterval` effect, since it doesn't restart the timer. Adding the current value to the dependency array also fixes the staleness, but rebuilds the interval every tick — save that approach for effects whose setup is cheap (a fetch, say), not ones with real teardown/setup cost.
     category: JavaScript
     tag:
       - scope-and-closures
@@ -194,7 +192,7 @@ Note that `count` is unreachable from the _outside_. There is no way to write `c
 
 ## Use case 1: private state
 
-Before `#private` class fields existed, closures were _the_ way to hide data in JavaScript.
+Before `#private` class fields existed, closures were the most common way to hide data in JavaScript — `WeakMap`-based encapsulation was another, less ergonomic option.
 
 ```js
 function createAccount(initial) {
@@ -334,10 +332,10 @@ setCount(prev => prev + 1); // ✅ never read count at all
 ```jsx
 useEffect(() => {
   /* ... */
-}, [count]); // ✅ rebuild the closure whenever count changes
+}, [count]); // ⚠️ works here, but rebuilds the interval every tick
 ```
 
-Use the updater form when you only need the previous value. Add the dependency when the callback genuinely needs the current value for something else. The dependency array is essentially a list of "which variables in my backpack need refreshing."
+Use the updater form when you only need the previous value — for a `setInterval` effect like this one, it's almost always the right choice, since the interval itself never gets torn down. Adding the dependency does rebuild the closure and stop it from being stale, but for effects with real setup cost (an interval, a subscription, a connection) it also means recreating that resource every time the dependency changes — React's own docs flag exactly this interval pattern for that reason. Reach for the dependency-array fix when the setup is cheap or idempotent, like a fetch keyed off a value — not when it's spinning up something that shouldn't restart every render.
 
 This is also where `let` stops helping. The loop trap was one shared binding; a stale closure is a callback that was never rebuilt. Same symptom, different cause, different fix.
 
@@ -431,3 +429,6 @@ console.log(fns.map(f => f()));
 - MDN Web Docs — [Closures](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures)
 - MDN Web Docs — [Memory management](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_management)
 - React — [`useEffect`](https://react.dev/reference/react/useEffect)
+- V8.dev — [Lazy parsing](https://v8.dev/blog/preparser)
+- MDN Web Docs — [`for`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for)
+- Chrome DevTools — [JavaScript debugging reference](https://developer.chrome.com/docs/devtools/javascript/reference)
