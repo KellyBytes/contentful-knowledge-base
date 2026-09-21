@@ -15,8 +15,7 @@ summary: >-
 contentfulEntryId: D9w0y4iWJrIKtynKlVWw8
 order: 200
 versionScope: >-
-  ES2015 (ES6) and later; structuredClone requires Node.js 17+ (backported to
-  16.17+) or a modern browser
+  ES2015 (ES6) and later; structuredClone requires Node.js 17+ or a modern browser
 readingTime: 9
 prerequisites:
   - array-methods-and-immutable-updates
@@ -150,24 +149,34 @@ value, and copying the variable only copies the address. That one distinction
 is the entire article — everything below is it playing out in a different
 situation.
 
-## The house analogy
+## The box-and-label analogy
 
-Imagine a notebook where you write things down.
+Imagine a warehouse. Every variable is a labeled box on a shelf in your office.
 
-- A **primitive** is like writing down a phone number. The number is right
-  there on the page. Copy the page and you have a second, independent number.
-- A **reference** is like writing down a house address. The house isn't on the
-  page — only directions to it. Copy the page and you have two pages pointing
-  at the **same house**. Repaint the house, and both pages describe a
-  repainted house.
+- A **primitive** is like a box that holds the value itself, right inside it.
+  Copy the box and you get a second, independent value.
+- A **reference** is like a box that holds a sticky note instead of the value.
+  The note just says "Shelf 3B" — the actual item (the object) lives out in
+  the warehouse. Copy the box and you get two boxes, but the sticky notes both
+  say "Shelf 3B": they point at the same item. Change what's on Shelf 3B, and
+  every box holding that note now describes the changed item.
 
-Where the analogy breaks: a real address is something you could hand to a
-stranger and let them find the house on their own. A JavaScript reference
-isn't — you can never read it, print it, or store it as a plain value; the
-language only lets you follow it. There's also no real-world equivalent of
-"the house is demolished the moment the last page pointing to it is thrown
-away." That is exactly what happens to an object once nothing references it
-anymore, and it's the mechanism that makes garbage collection possible.
+There's also a **warehouse janitor** (the garbage collector). The janitor
+periodically walks the floor and checks: for each item on a shelf, is there
+still at least one sticky note anywhere in the office pointing to it? If a
+shelf has zero notes pointing to it, the janitor clears it out and frees the
+space. An item only gets cleared once every note referencing it is gone — not
+the moment any single note is removed.
+
+Two things worth knowing:
+
+- **You don't control when the janitor makes rounds.** Setting a variable to
+  `null` just removes one sticky note; it doesn't force an immediate cleanup.
+  The actual reclaiming happens on the engine's own schedule.
+- **A note you forgot to remove keeps an item alive.** This is a common
+  real-world cause of memory leaks — a stale event listener, a closure still
+  holding a reference — not "the janitor being lazy," but a sticky note still
+  sitting on a box you stopped using.
 
 ## Which is which
 
@@ -204,7 +213,7 @@ separate storage.
 ```
 
 `age` and `name` carry their values directly on the board. `user` only
-carries a ticket number pointing elsewhere.
+carries a sticky note pointing elsewhere.
 
 ## Copying: the moment it starts to matter
 
@@ -241,14 +250,14 @@ number. For `x` that's the address.
 same object**.
 
 ```js
-"abc" === "abc";        // true  — same value
-1 === 1;                // true
+console.log('abc' === 'abc'); // true  — same value
+console.log(1 === 1); // true
 
-{} === {};               // false — two different objects
-[1, 2] === [1, 2];       // false
+console.log({} === {}); // false — two different objects
+console.log([1, 2] === [1, 2]); // false
 ```
 
-Two houses can look identical and still be two different houses. If you need
+Two items can look identical and still be two different items. If you need
 to compare contents, `===` won't do it for you — you have to walk through the
 structure yourself.
 
@@ -275,9 +284,9 @@ replace(person);
 console.log(person.name); // "Bytes"  ← unchanged by replace
 ```
 
-`rename` walks to the house and repaints it. `replace` scribbles a different
-address on its own scrap of paper and throws the paper away when the
-function returns — the caller's paper never changed.
+`rename` follows the note to the shelf and changes the item there. `replace`
+writes a different shelf number on its own copy of the note and throws it away
+when the function returns — the caller's box never changed.
 
 ## Primitives are immutable
 
@@ -286,7 +295,9 @@ You can't modify a primitive — only replace it with a new one.
 ```js
 let s = 'hello';
 s[0] = 'H';
-console.log(s); // "hello" — silently ignored
+console.log(s); // "hello" — silently ignored in sloppy mode.
+// In strict mode (including ES modules), this throws instead:
+// TypeError: Cannot assign to read only property '0' of string 'hello'
 
 s = s.toUpperCase(); // returns a NEW string
 console.log(s); // "HELLO"
@@ -374,9 +385,10 @@ tells you which side of the mistake you're on.
 
 - `Symbol` is ES2015; `BigInt` is ES2020. Both are primitives.
 - Object spread (`{ ...obj }`) is ES2018; array spread is ES2015.
-- `structuredClone` needs **Node.js 17+** (backported to 16.17+) or a current
-  browser. On an older Node version, use a polyfill or a library like
-  lodash's `cloneDeep` instead.
+- `structuredClone` needs **Node.js 17+** or a current browser. (Node's own
+  docs list only `v17.0.0` for this API — an earlier proposal to back-port it
+  to the 16.x line doesn't appear to have landed.) On an older Node version,
+  use a polyfill or a library like lodash's `cloneDeep` instead.
 - `Object.is`, which React's reconciliation uses, differs from `===` only for
   `NaN` (`Object.is(NaN, NaN)` is `true`) and `-0` vs `0`.
 - To verify support, run `node -v`, or check the compatibility table on MDN
@@ -427,3 +439,7 @@ independent, but `tags` is a nested array, so `copy.tags` and
 - MDN Web Docs — [JavaScript data types and data structures](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures)
 - MDN Web Docs — [Equality comparisons and sameness](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Equality_comparisons_and_sameness)
 - MDN Web Docs — [structuredClone()](https://developer.mozilla.org/en-US/docs/Web/API/Window/structuredClone)
+- MDN Web Docs — [typeof](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof)
+- MDN Web Docs — [Memory management](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_management)
+- MDN Web Docs — [WeakRef](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakRef)
+- MDN Web Docs — [Structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm)
