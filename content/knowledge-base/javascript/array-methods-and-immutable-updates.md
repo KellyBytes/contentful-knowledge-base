@@ -292,7 +292,11 @@ setTodos(todos.map(t => (t.id === id ? { ...t, done: true } : t)));
 
 Note the inner spread — that's the second level of copying from the trap
 above. Returning `t` unchanged for every other item is correct and cheap:
-those items keep their identity, so React can skip re-rendering them.
+those items keep their identity, so a component wrapped in `React.memo`
+(or optimized by the React Compiler) can skip re-rendering them. Without
+that, React still re-renders every child when the parent re-renders,
+regardless of whether its props kept the same reference — identity alone
+doesn't skip anything by default.
 
 **Insert at a position**
 
@@ -407,3 +411,5 @@ from `todos[0]`. The item that didn't match was returned unchanged, so
 - MDN Web Docs — [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)
 - MDN Web Docs — [Array.prototype.sort()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort)
 - MDN Web Docs — [Array.prototype.toSorted()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toSorted)
+- MDN Web Docs — [Destructuring assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment)
+- React — [useState](https://react.dev/reference/react/useState)
