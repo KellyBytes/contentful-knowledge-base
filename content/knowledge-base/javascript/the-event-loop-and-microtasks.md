@@ -15,7 +15,7 @@ summary: >-
 contentfulEntryId: 4UBVUBwsXMUrIn86oZVhLU
 order: 500
 versionScope: >-
-  Promises: ES2015; async/await: ES2017; queueMicrotask(): Node.js 11+ (2018), browsers same era. Node's phased event loop differs from the browser model described here.
+  Promises: ES2015; async/await: ES2017; queueMicrotask(): Node.js 11+ (2018), all major browsers by early 2020 (Chrome 71, Safari 12.1, Firefox 69, Edge 79). Node's phased event loop differs from the browser model described here.
 readingTime: 12
 prerequisites:
   - closures-explained
@@ -77,7 +77,9 @@ interviewQuestions:
       priority. A promise represents a value that has already been decided, so
       reacting to it should not be delayed by unrelated work that happened to be
       scheduled earlier. Draining the whole microtask queue in one pass also
-      keeps a chain of then calls atomic — nothing can slip between the links.
+      means no task — no timer, event, or render — can slip between the links
+      of a then chain, though other microtasks queued at the same time can
+      still interleave with it.
       setTimeout with zero delay does not mean run now; it means run after the
       current work and after everything in the microtask queue.
   - id: 4poKnsTmRS0jzoMxI4EaUu
@@ -94,8 +96,9 @@ interviewQuestions:
     question: How do you keep a long-running computation from blocking the UI?
     shortAnswer: >-
       First ask whether it belongs on the main thread at all — anything
-      genuinely heavy is better in a Web Worker, which has its own thread and
-      cannot block rendering. If it must stay on the main thread, split it into
+      genuinely heavy is better in a Web Worker, which runs on its own thread
+      and keeps that work off the main thread where rendering happens. If it
+      must stay on the main thread, split it into
       chunks separated by a task boundary so paint and input can happen in
       between; setTimeout works, and requestIdleCallback is better when the work
       can wait. For visual updates specifically, requestAnimationFrame runs
@@ -203,8 +206,7 @@ A promise represents a value that has already been decided. Callbacks
 reacting to that decision should not be delayed by unrelated work such as a
 timer that happened to be scheduled earlier.
 
-Draining the whole microtask queue in one go keeps a chain of `.then` calls
-**atomic** — nothing else can slip between the links.
+Draining the whole microtask queue in one go means no **task** can slip between the links of a `.then` chain — no timer, no event, no render. It is not fully atomic, though: other microtasks can interleave. Two chains started side by side alternate link by link (`a1, b1, a2, b2, …`).
 
 ```js
 Promise.resolve()
@@ -283,8 +285,7 @@ console.log('C');
 
 The function runs synchronously until the first `await`, then returns
 control. `"C"` runs, the stack empties, and only then does `"B"` resume.
-This is why `await` inside a loop is slow — each iteration waits a full
-turn before the next one begins.
+This is also why `await` inside a loop serializes the work — each iteration waits for its awaited value to settle before the next one begins. It does not give the browser a chance to render, though: resuming after an `await` is a microtask, so no task runs between iterations unless the awaited promise itself waits on one (such as a `setTimeout`).
 
 ## Side-by-side
 
@@ -299,24 +300,25 @@ turn before the next one begins.
 
 If ordering surprises you, ask two questions in order: **has the call stack
 emptied yet**, and **is this a microtask or a task?** Synchronous code
-finishes first, microtasks drain completely, then one task runs. That
-sequence is fixed and has no exceptions, which is exactly why it works as a
-diagnostic — almost every "why did this log out of order" bug resolves
-against those three steps.
+finishes first, microtasks drain completely, then one task runs. In the browser that sequence is fixed, which is exactly why it works as a diagnostic — almost every "why did this log out of order" bug resolves against those three steps. (Node adds its own `process.nextTick` queue on top; see the notes below.)
 
 ## Version and environment notes
 
 - Promises are **ES2015**; `async`/`await` is **ES2017**.
-- `queueMicrotask()` shipped in **Node.js 11+** (2018) and reached browsers
-  around the same time — safe to assume in any current environment.
-- Node.js splits tasks into phases (timers, I/O callbacks, check, close)
-  and adds two queues that don't exist in the browser model:
+- `queueMicrotask()` shipped in **Node.js 11+** (October 2018). Browsers followed between late 2018 (Chrome 71) and early 2020 (Edge 79) — safe to assume in any current environment.
+- Node.js splits tasks into phases (timers, pending callbacks, poll, check,
+  close callbacks) and adds two queues that don't exist in the browser model:
 
-  |                    | Runs when                                            |
-  | ------------------ | ---------------------------------------------------- |
-  | `process.nextTick` | before other microtasks, after the current operation |
-  | promise callbacks  | after `nextTick`, before the next phase              |
-  | `setImmediate`     | in the check phase, after I/O                        |
+  |                    | Runs when                                                          |
+  | ------------------ | ------------------------------------------------------------------ |
+  | `process.nextTick` | after the current operation; in CommonJS, before promise callbacks |
+  | promise callbacks  | right after the `nextTick` queue drains, before the next phase     |
+  | `setImmediate`     | in the check phase, right after poll (I/O)                         |
+
+  The `nextTick`-first order holds in CommonJS only. An ES module's
+  top-level code already runs as part of the microtask queue, so there
+  promise callbacks run _before_ `nextTick` ones. Node now marks
+  `process.nextTick` as legacy and recommends `queueMicrotask()` instead.
 
   For interview purposes, the browser model above is almost always what's
   being asked about. Bring up Node's phases only if the question goes
@@ -374,4 +376,9 @@ the call has finished.
 
 - MDN Web Docs — [The event loop](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop)
 - MDN Web Docs — [In depth: Microtasks and the JavaScript runtime environment](https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide/In_depth)
+- MDN Web Docs — [await](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await)
+- MDN Web Docs — [async function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function)
+- MDN Web Docs — [Window: requestAnimationFrame() method](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame)
+- MDN Web Docs — [Window: requestIdleCallback() method](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestIdleCallback)
 - Node.js Docs — [The Node.js Event Loop, Timers, and process.nextTick()](https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick)
+- Node.js Docs — [process: process.nextTick() and queueMicrotask()](https://nodejs.org/api/process.html)
