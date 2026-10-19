@@ -79,7 +79,7 @@ gotchas:
     cause: >-
       The promise's executor never called `resolve` or `reject` on that code path, so the promise never settles. `await` waits forever, with no error and no timeout.
     fix: >-
-      Make sure every path inside a `new Promise()` executor calls `resolve` or `reject`, or race the promise against a rejecting timer with `Promise.race()` to guarantee it eventually settles.
+      Make sure every path inside a `new Promise()` executor calls `resolve` or `reject`, or race the promise against a rejecting timer with `Promise.race()` so your `await` is guaranteed to settle. The original promise still stays pending — you've only stopped waiting on it.
     category: JavaScript
     tag:
       - async
@@ -133,18 +133,11 @@ interviewQuestions:
   - id: 4H6w75egk11CU8oWsh2oCQ
     question: Where should error handling live in an async application?
     shortAnswer: >-
-      Where you can actually do something about it — usually the layer that can
-      show a message or retry. Wrapping every `await` in `try/catch` creates
-      noise and tends to swallow errors that should have surfaced.
+      Where you can actually do something about it — usually the layer that can show a message or retry. Wrapping every `await` in `try/catch` adds noise and tends to swallow errors that should surface.
 
+      Since a rejection propagates up the `await` chain like a thrown error, let it bubble to one `try/catch` at the top: the event handler or route handler that started the work.
 
-      Let them bubble to one boundary per layer instead: an error boundary in
-      React, error-handling middleware in Express.
-
-
-      The exception is any promise you deliberately don't await. Attach
-      `.catch()` to it, because an unhandled rejection is silent in the browser
-      and terminates the process in Node 15 and later.
+      The exception is a promise you deliberately don't await. Attach `.catch()`: in the browser an unhandled rejection is just an easy-to-miss console error, and in Node 15+ it crashes the process.
 ---
 
 Run this and predict what it logs before reading on.
@@ -202,7 +195,11 @@ that's already moving — even a lost package eventually gets flagged and
 refunded. A promise has no such guarantee. If the code that creates it
 never calls `resolve` or `reject` on every path, the promise simply never
 settles — no error, no timeout, just a permanently pending placeholder.
-`await` on it hangs forever with no signal that anything went wrong.
+`await` on it never resumes, with no signal that anything went wrong. In
+Node, if nothing else is keeping the process alive, the process then just
+exits quietly — it looks less like a hang and more like code that
+mysteriously stopped running. (A top-level `await` is the one case where
+Node prints a warning: "Detected unsettled top-level await".)
 
 ## Consuming a promise
 
@@ -289,16 +286,22 @@ This is the most common performance mistake in async code.
 
 ```js
 // ❌ 3 seconds — each await waits for the previous one
-const user = await fetchUser();
-const posts = await fetchPosts();
-const tags = await fetchTags();
+async function loadSequential() {
+  const user = await fetchUser();
+  const posts = await fetchPosts();
+  const tags = await fetchTags();
+  return { user, posts, tags };
+}
 
 // ✅ 1 second — all three start immediately
-const [user, posts, tags] = await Promise.all([
-  fetchUser(),
-  fetchPosts(),
-  fetchTags(),
-]);
+async function loadParallel() {
+  const [user, posts, tags] = await Promise.all([
+    fetchUser(),
+    fetchPosts(),
+    fetchTags(),
+  ]);
+  return { user, posts, tags };
+}
 ```
 
 Use sequential `await` only when a later call genuinely needs the earlier
@@ -309,12 +312,18 @@ The same trap inside a loop:
 
 ```js
 // ❌ one at a time
-for (const id of ids) {
-  results.push(await fetchItem(id));
+async function loadOneByOne(ids) {
+  const results = [];
+  for (const id of ids) {
+    results.push(await fetchItem(id));
+  }
+  return results;
 }
 
 // ✅ all at once
-const results = await Promise.all(ids.map(id => fetchItem(id)));
+async function loadAllAtOnce(ids) {
+  return Promise.all(ids.map(id => fetchItem(id)));
+}
 ```
 
 ⚠️ `array.forEach(async (x) => ...)` does **not** wait. `forEach` ignores
@@ -387,11 +396,15 @@ each other. Roughly how long does each version take?
 
 ```js
 // Version 1
-const a = await fetchA();
-const b = await fetchB();
+async function version1() {
+  const a = await fetchA();
+  const b = await fetchB();
+}
 
 // Version 2
-const [a, b] = await Promise.all([fetchA(), fetchB()]);
+async function version2() {
+  const [a, b] = await Promise.all([fetchA(), fetchB()]);
+}
 ```
 
 <details>
@@ -411,5 +424,14 @@ the other's result.
 ## Sources
 
 - MDN Web Docs — [Using promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises)
+- MDN Web Docs — [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)
+- MDN Web Docs — [async function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function)
+- MDN Web Docs — [Window: fetch() method](https://developer.mozilla.org/en-US/docs/Web/API/Window/fetch)
+- MDN Web Docs — [Array.prototype.forEach()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach)
 - MDN Web Docs — [Promise.allSettled()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled)
+- MDN Web Docs — [Promise.race()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/race)
+- MDN Web Docs — [Promise.any()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/any)
 - MDN Web Docs — [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController)
+- MDN Web Docs — [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+- MDN Web Docs — [Window: unhandledrejection event](https://developer.mozilla.org/en-US/docs/Web/API/Window/unhandledrejection_event)
+- Node.js Docs — [Command-line API: --unhandled-rejections](https://nodejs.org/api/cli.html)
